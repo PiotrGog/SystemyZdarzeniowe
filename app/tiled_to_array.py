@@ -18,3 +18,4 @@ def tiled_to_array(json_map_file_name):
 
 if __name__ == "__main__":
     maps = tiled_to_array(sys.argv[1])
+    print(maps)

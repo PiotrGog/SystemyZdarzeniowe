@@ -1,2 +1,8 @@
 env/
 .vscode/
+raporty/*.pdf
+raporty/*.synctex.gz
+raporty/*.log
+raporty/*.tox
+raporty/*.aux
+
