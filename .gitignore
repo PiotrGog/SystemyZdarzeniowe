@@ -6,4 +6,5 @@ raporty/*.synctex.gz
 raporty/*.log
 raporty/*.tox
 raporty/*.aux
+__pycache__/
 
