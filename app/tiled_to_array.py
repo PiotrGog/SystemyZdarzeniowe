@@ -17,5 +17,6 @@ def tiled_to_array(json_map_file_name):
 
 
 if __name__ == "__main__":
-    maps = tiled_to_array(sys.argv[1])
+    #maps = tiled_to_array(sys.argv[1])
+    maps = tiled_to_array("./resources/plan_budynku_01.json")
     print(maps)
