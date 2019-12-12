@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import sys
+import pickle
 
 
 def tiled_to_array(json_map_file_name):
@@ -17,5 +18,19 @@ def tiled_to_array(json_map_file_name):
 
 
 if __name__ == "__main__":
-    maps = tiled_to_array(sys.argv[1])
-    print(maps)
+    maps = None
+    if "load" == sys.argv[2]:
+        with open(sys.argv[1], 'rb') as f:
+            maps = pickle.load(f)
+    else:
+        maps = tiled_to_array(sys.argv[1])
+        if "print" == sys.argv[2]:
+            print(maps)
+        if "text" == sys.argv[2]:
+            with open("map.bin", 'w') as f:
+                pickle.dump(maps, f)
+        if "bin" == sys.argv[2]:
+            with open("map.bin", 'wb') as f:
+                pickle.dump(maps, f)
+
+    print(maps.shape)
