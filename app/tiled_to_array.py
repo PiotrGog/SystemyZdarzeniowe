@@ -34,3 +34,6 @@ if __name__ == "__main__":
                 pickle.dump(maps, f)
 
     print(maps.shape)
+    # maps = tiled_to_array(sys.argv[1])
+    maps = tiled_to_array("./resources/plan_budynku_01.json")
+    print(maps)
