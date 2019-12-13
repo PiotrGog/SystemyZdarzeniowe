@@ -13,7 +13,14 @@ class MainDriver(object):
         print("_robot_notify_none_callback")
 
     def _robot_notify_arrived_callback(self, robot):
-        pass
+        self._set_robot_status(robot, RobotStatus.STOP)
+        robot_step = self._get_robot_step(robot)
+        if robot_step <= 0:
+            return
+        prev_coords = self._get_robot_coordinates(robot, -1)
+        self._set_map_field(prev_coords, MapObject.VISITED)
+        curr_coords = self._get_robot_coordinates(robot)
+        self._set_map_field(curr_coords, robot.get_id())
 
     def _robot_notify_found_human_callback(self, robot):
         pass
@@ -23,6 +30,30 @@ class MainDriver(object):
 
     def _robot_notify_want_run_callback(self, robot):
         pass
+
+    def _get_robot_status(self, robot):
+        return self._robots_status[robot.get_id()][1]
+
+    def _set_robot_status(self, robot, status):
+        self._robots_status[robot.get_id()] = (self._robots_status[robot.get_id()][0], status)
+
+    def _next_robot_step(self, robot):
+        step, status = self._robots_status[robot.get_id()]
+        self._robots_status[robot.get_id()] = (step + 1, status)
+
+    def _get_robot_step(self, robot):
+        return self._robots_status[robot.get_id()][0]
+
+    def _get_robot_coordinates(self, robot, offset_from_current=0):
+        return self._paths[robot.get_id()][self._get_robot_step(robot) + offset_from_current]
+
+    def _get_map_field(self, coordinates):
+        z, x, y = coordinates
+        return self._map[z, x, y]
+
+    def _set_map_field(self, coordinates, status):
+        z, x, y = coordinates
+        self._map[z, x, y] = status
 
     def __init__(self, map, robots):
         self._map = map

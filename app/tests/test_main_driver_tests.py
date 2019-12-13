@@ -89,9 +89,39 @@ def test_handle_robot_notify_none(map_with_walls, robots, mocker):
 def test_handle_robot_notify_arrived(map_with_walls, robots, mocker):
     main_driver = MainDriver(map_with_walls, robots)
     robots[0].get_notify.return_value = RobotNotification.ARRIVED
+    robot = robots[0]
+    main_driver._paths[robot.get_id()].append((0, 2, 2))
+    main_driver._paths[robot.get_id()].append((0, 2, 3))
+    main_driver._next_robot_step(robot)
+    main_driver._next_robot_step(robot)
+    main_driver._set_robot_status(robot, RobotStatus.RUN)
     mocker.spy(main_driver, '_robot_notify_arrived_callback')
-    main_driver.handle_robot_notify(robots[0])
+    assert RobotStatus.RUN == main_driver._get_robot_status(robot)
+    main_driver.handle_robot_notify(robot)
     assert main_driver._robot_notify_arrived_callback.call_count == 1
+    assert RobotStatus.STOP == main_driver._get_robot_status(robot)
+    previous_field = main_driver._get_robot_coordinates(robot, -1)
+    assert MapObject.VISITED == main_driver._get_map_field(previous_field)
+    assert 0 < main_driver._get_map_field(main_driver._get_robot_coordinates(robot))
+
+
+def test_get_robot_status(map_with_walls, robots):
+    main_driver = MainDriver(map_with_walls, robots)
+    assert RobotStatus.STOP == main_driver._get_robot_status(robots[0])
+
+
+def test_set_robot_status(map_with_walls, robots):
+    main_driver = MainDriver(map_with_walls, robots)
+    main_driver._set_robot_status(robots[0], RobotStatus.RUN)
+    assert RobotStatus.RUN == main_driver._get_robot_status(robots[0])
+
+
+def test_robot_next_step(map_with_walls, robots):
+    main_driver = MainDriver(map_with_walls, robots)
+    prev_step = main_driver._get_robot_step(robots[0])
+    main_driver._next_robot_step(robots[0])
+    current_step = main_driver._get_robot_step(robots[0])
+    assert current_step == prev_step + 1
 
 
 def test_handle_robot_notify_want_run(map_with_walls, robots, mocker):
