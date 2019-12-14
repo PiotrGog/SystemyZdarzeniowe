@@ -51,3 +51,23 @@ while status[0] < len(track):
         if flag == RobotStatus.RUN:
             break
     run()
+
+
+class RobotDriver(object):
+    def __init__(self):
+        pass
+
+    def get_notify(self):
+        pass
+
+    def get_notify_details(self):
+        pass
+
+    def reset_notify(self):
+        pass
+
+    def get_id(self):
+        pass
+
+    def set_path(self):
+        pass

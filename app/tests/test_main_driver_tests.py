@@ -1,10 +1,8 @@
 import pytest
-from pytest_mock import mocker
 import numpy as np
 from collections import Counter
 from src.main_driver import MainDriver
 from src.consts import MapObject, RobotNotification, RobotStatus
-from .base_classes_mocks import RobotDriver
 
 
 @pytest.fixture()
@@ -157,6 +155,7 @@ def test_handle_robot_notify_want_run_next_step_available(map_with_walls, robots
 def test_handle_robot_notify_found_human(map_with_walls, robots, mocker):
     main_driver = MainDriver(map_with_walls, robots)
     robots[0].get_notify.return_value = RobotNotification.FOUND_HUMAN
+    robots[0].get_notify_details.return_value = (0, 2, 2)
     mocker.spy(main_driver, '_robot_notify_found_human_callback')
     main_driver.handle_robot_notify(robots[0])
     assert main_driver._robot_notify_found_human_callback.call_count == 1
@@ -165,6 +164,7 @@ def test_handle_robot_notify_found_human(map_with_walls, robots, mocker):
 def test_handle_robot_notify_found_obstacle(map_with_walls, robots, mocker):
     main_driver = MainDriver(map_with_walls, robots)
     robots[0].get_notify.return_value = RobotNotification.FOUND_OBSTACLE
+    robots[0].get_notify_details.return_value = (0, 2, 2)
     mocker.spy(main_driver, '_robot_notify_found_obstacle_callback')
     main_driver.handle_robot_notify(robots[0])
     assert main_driver._robot_notify_found_obstacle_callback.call_count == 1

@@ -135,4 +135,4 @@ class MainDriver(object):
             self._robot_notify_found_human_callback(robot)
         else:
             raise Exception("Illegal notification")
-        # robot.reset_notify()
+        robot.reset_notify()
