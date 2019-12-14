@@ -126,10 +126,32 @@ def test_robot_next_step(map_with_walls, robots):
 
 def test_handle_robot_notify_want_run(map_with_walls, robots, mocker):
     main_driver = MainDriver(map_with_walls, robots)
+    main_driver._paths[robots[0].get_id()].append((0, 1, 1))
+    main_driver._paths[robots[0].get_id()].append((0, 1, 2))
+    main_driver._paths[robots[0].get_id()].append((0, 1, 3))
+    main_driver._set_robot_step(robots[0], 0)
     robots[0].get_notify.return_value = RobotNotification.WANT_RUN
     mocker.spy(main_driver, '_robot_notify_want_run_callback')
     main_driver.handle_robot_notify(robots[0])
     assert main_driver._robot_notify_want_run_callback.call_count == 1
+
+
+def test_handle_robot_notify_want_run_next_step_available(map_with_walls, robots, mocker):
+    main_driver = MainDriver(map_with_walls, robots)
+    robots[0].get_notify.return_value = RobotNotification.WANT_RUN
+    robot = robots[0]
+    main_driver._paths[robot.get_id()].append((0, 1, 1))
+    main_driver._paths[robot.get_id()].append((0, 1, 2))
+    main_driver._paths[robot.get_id()].append((0, 1, 3))
+    main_driver._set_robot_status(robot, RobotStatus.STOP)
+    main_driver._set_robot_step(robot, 0)
+    main_driver._set_map_field((0, 1, 1), robot.get_id())
+    mocker.spy(main_driver, '_robot_notify_want_run_callback')
+    main_driver.handle_robot_notify(robots[0])
+    assert main_driver._robot_notify_want_run_callback.call_count == 1
+    assert 0 < main_driver._get_map_field(main_driver._get_robot_coordinates(robot))
+    assert main_driver._get_map_field(main_driver._get_robot_coordinates(robot, -1)) == \
+           main_driver._get_map_field(main_driver._get_robot_coordinates(robot))
 
 
 def test_handle_robot_notify_found_human(map_with_walls, robots, mocker):
@@ -146,11 +168,3 @@ def test_handle_robot_notify_found_obstacle(map_with_walls, robots, mocker):
     mocker.spy(main_driver, '_robot_notify_found_obstacle_callback')
     main_driver.handle_robot_notify(robots[0])
     assert main_driver._robot_notify_found_obstacle_callback.call_count == 1
-
-# def test_robot_notify_want_run(map_with_walls, robots, mocker):
-#     main_driver = MainDriver(map_with_walls, robots)
-#     robots[0].get_notify.return_value = RobotNotification.WANT_RUN
-#     # robots[0].get_status.return_value = RobotStatus.STOP
-#     mocker.spy(main_driver, '_robot_notify_found_obstacle_callback')
-#     main_driver.handle_robot_notify(robots[0])
-#     assert main_driver._robot_notify_found_obstacle_callback.call_count == 1

@@ -29,7 +29,10 @@ class MainDriver(object):
         pass
 
     def _robot_notify_want_run_callback(self, robot):
-        pass
+        next_coordinates = self._get_robot_coordinates(robot, 1)
+        self._set_map_field(next_coordinates, robot.get_id())
+        self._set_robot_status(robot, RobotStatus.RUN)
+        self._next_robot_step(robot)
 
     def _get_robot_status(self, robot):
         return self._robots_status[robot.get_id()][1]
@@ -40,6 +43,10 @@ class MainDriver(object):
     def _next_robot_step(self, robot):
         step, status = self._robots_status[robot.get_id()]
         self._robots_status[robot.get_id()] = (step + 1, status)
+
+    def _set_robot_step(self, robot, step):
+        _, status = self._robots_status[robot.get_id()]
+        self._robots_status[robot.get_id()] = (step, status)
 
     def _get_robot_step(self, robot):
         return self._robots_status[robot.get_id()][0]
