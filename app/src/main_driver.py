@@ -10,7 +10,7 @@ import random
 
 class MainDriver(object):
     def _robot_notify_none_callback(self, robot):
-        print("_robot_notify_none_callback")
+        pass
 
     def _robot_notify_arrived_callback(self, robot):
         self._set_robot_status(robot, RobotStatus.STOP)
@@ -23,10 +23,12 @@ class MainDriver(object):
         self._set_map_field(curr_coords, robot.get_id())
 
     def _robot_notify_found_human_callback(self, robot):
-        pass
+        z, x, y = robot.get_notify_details()
+        self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
-        pass
+        z, x, y = robot.get_notify_details()
+        self._map[z, x, y] = MapObject.OBSTACLE
 
     def _robot_notify_want_run_callback(self, robot):
         next_coordinates = self._get_robot_coordinates(robot, 1)
@@ -133,4 +135,4 @@ class MainDriver(object):
             self._robot_notify_found_human_callback(robot)
         else:
             raise Exception("Illegal notification")
-        # self.callbacks[robot_notification](self, robot)
+        # robot.reset_notify()
