@@ -4,70 +4,52 @@ from .consts import (
     RobotStatus
 )
 
+from .main_driver import MainDriver
+
 import numpy as np
 import random
 import time
 
-global flag
-
-
-def setTrack(array):  # ustawienie trasy
-    global track
-    track = array
-    global i
-    i = 0
-
-
-def setStatus(state):  # ustawienie statusu
-    global status
-    i = status[0]
-    stan = (i, state)
-
-
-def run():  # przesuniecie robota po udzieleniu zgody na jazde
-    global status
-    timeRand = random(1, 2)
-    setStatus(RobotStatus.RUN)
-    time.sleep(timeRand)
-    # tutaj sprawdzenie czy cos wykrylo
-    setStatus(RobotStatus.STOP)
-    flag = RobotNotification.ARRIVED
-    status = (status[0] + 1, status[1])
-
-
-def wantRun():  # ustawienie notyfikacji z prosba o przejazd
-    global notification
-    notification = RobotNotification.WANT_RUN
-
-
-flag = RobotStatus.STOP
-notification = RobotNotification.NONE
-track = []
-status = [0, RobotStatus.STOP]
-
-while status[0] < len(track):
-    wantRun()
-    while True:
-        if flag == RobotStatus.RUN:
-            break
-    run()
-
 
 class RobotDriver(object):
-    def __init__(self):
-        pass
+    def __init__(self, robotID, map):
+        self.robotID = robotID
+        self.path = []
+        self.notification = RobotNotification.NONE
+        self.map = map
+        self.status = [0, RobotStatus.STOP]
 
     def get_notify(self):
-        pass
+        return self.notification
 
     def get_notify_details(self):
-        pass
+        return self.path[self.status[0]]
 
     def reset_notify(self):
-        pass
+        self.notification = RobotNotification.NONE
 
     def get_id(self):
-        pass
+        return self.robotID
 
-    def set_path(self):
-        pass
+    def set_path(self, path):
+        self.path = path
+
+    def set_status(self, state):
+        self.status =[self.status[0], state]
+
+    def detect_obstacle(self):  # wykrycie przeszkody z mapy rzeczywistej
+        x, y, z = self.path[self.status[0]]
+        if self.map[x, y, z] == MapObject.HUMAN:
+            self.notification = RobotNotification.FOUND_HUMAN
+        elif self.map[x, y, z] == MapObject.OBSTACLE:
+            self.notification = RobotNotification.FOUND_OBSTACLE
+
+    def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
+        self.notification = RobotNotification.WANT_RUN
+        if self.status[1] == RobotStatus.RUN:
+            time_rand = random(1, 2)
+            time.sleep(time_rand)
+            self.detect_obstacle(self)
+            if self.notification != RobotNotification.FOUND_OBSTACLE:
+                self.status = [self.status[0]+1, RobotStatus.STOP]
+                self.notification = RobotNotification.ARRIVED
