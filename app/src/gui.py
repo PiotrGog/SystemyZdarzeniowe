@@ -57,7 +57,7 @@ class MapGui(object):
                                       self._square_size, self._square_size))
 
         pygame.display.update()
-        pygame.time.wait(10000)
+        pygame.time.wait(100)
 
 
 if __name__ == '__main__':

@@ -99,6 +99,9 @@ class MainDriver(object):
                 available_coords.append((z_c, x_c, y))
         return available_coords
 
+    def get_map(self):
+        return self._map
+
     def plan_random_path(self, **kwargs):
         path_length = kwargs['length']
         robot = kwargs['robot']
