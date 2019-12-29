@@ -1,7 +1,7 @@
 from src.consts import MapObject
 from enum import Enum
 import pygame
-from src.temporary_map import temporary_map
+from src import temporary_map
 
 
 class Colors(Enum):
@@ -36,7 +36,7 @@ class MapGui(object):
     def update(self, map):
         self._map = map
         self._drawn_map_height = map.shape[1]
-        self._drawn_map_width = map.shape[2] * 3
+        self._drawn_map_width = map.shape[2] * map.shape[0]
         self._height = (self._drawn_map_height + 1) * self._square_size
         self._width = self._drawn_map_width * self._square_size
         self._size = (self._width, self._height)
@@ -67,6 +67,7 @@ if __name__ == '__main__':
     O = MapObject.OBSTACLE
     S = MapObject.STEPS
     R = 1
-    m_real_map = temporary_map
-    gui = MapGui(m_real_map)
+    m_real_map = temporary_map.temporary_map_2_floors
+    gui = MapGui()
+    gui.update(m_real_map)
     gui.draw()
