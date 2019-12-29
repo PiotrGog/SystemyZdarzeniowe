@@ -39,12 +39,14 @@ class MainDriver(object):
         self._set_map_field(curr_coords, robot.get_id())
 
     def _robot_notify_found_human_callback(self, robot):
-        z, x, y = robot.get_position()
-        self._map[z, x, y] = MapObject.HUMAN
+        self._set_map_field(robot.get_position(), MapObject.HUMAN)
+        # z, x, y = robot.get_position()
+        # self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
-        z, x, y = robot.get_position()
-        self._map[z, x, y] = MapObject.OBSTACLE
+        self._set_map_field(robot.get_position(), MapObject.OBSTACLE)
+        # z, x, y = robot.get_position()
+        # self._map[z, x, y] = MapObject.OBSTACLE
 
     def _robot_notify_want_run_callback(self, robot):
         next_coordinates = self._get_robot_coordinates(robot, 1)
