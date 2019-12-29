@@ -54,8 +54,8 @@ class RobotDriver(object):
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
         self._notification = RobotNotification.WANT_RUN
         if self._status[1] == RobotStatus.RUN:
-            time_rand = random.random() * 5
-            time.sleep(time_rand)
+            # time_rand = random.random() * 5
+            # time.sleep(time_rand)
             self.detect_obstacle()
             if self._notification != RobotNotification.FOUND_OBSTACLE:
                 self._status = (self._status[0] + 1, RobotStatus.STOP)

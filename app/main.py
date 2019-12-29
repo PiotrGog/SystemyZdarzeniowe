@@ -25,8 +25,8 @@ def main():
                             [W, E, E, E, E, E, W],
                             [W, E, E, E, E, E, W],
                             [W, W, W, W, W, W, W]]])
-    m_map = temporary_map.temporary_map_3_floors
-    m_real_map = temporary_map.temporary_map_3_floors
+    m_map = temporary_map.temporary_map_2_floors
+    m_real_map = temporary_map.temporary_map_2_floors
     print(m_map.shape)
     m_robots = [robot_driver.RobotDriver(1, m_real_map)]
     m_driver = main_driver.MainDriver(m_map, m_robots)

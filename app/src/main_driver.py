@@ -119,7 +119,8 @@ class MainDriver(object):
         self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
         for step in range(path_length):  # create path starting from current position
             available_coords = MainDriver._get_map_available_next_coords(robot_position_plan_path, self._map)
-            self._paths[id].append(random.choice(available_coords))
+            robot_position_plan_path = random.choice(available_coords)
+            self._paths[id].append(robot_position_plan_path)
         return self._paths[id]
 
     def plan_random_paths(self):
