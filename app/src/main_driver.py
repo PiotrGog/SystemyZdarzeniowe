@@ -4,11 +4,27 @@ from .consts import (
     RobotStatus
 )
 
+# from src import robot_driver
+
 import numpy as np
 import random
 
 
 class MainDriver(object):
+    def __init__(self, map, robots):
+        self._map = map
+        self._robots = robots
+        self._paths = {r.get_id(): [] for r in robots}
+        self._robots_status = {r.get_id(): (-1, RobotStatus.STOP) for r in robots}
+
+        self.callbacks = {
+            RobotNotification.NONE: MainDriver._robot_notify_none_callback,
+            RobotNotification.ARRIVED: self._robot_notify_arrived_callback,
+            RobotNotification.FOUND_HUMAN: self._robot_notify_found_human_callback,
+            RobotNotification.FOUND_OBSTACLE: self._robot_notify_found_obstacle_callback,
+            RobotNotification.WANT_RUN: self._robot_notify_want_run_callback,
+        }
+
     def _robot_notify_none_callback(self, robot):
         pass
 
@@ -23,11 +39,11 @@ class MainDriver(object):
         self._set_map_field(curr_coords, robot.get_id())
 
     def _robot_notify_found_human_callback(self, robot):
-        z, x, y = robot.get_notify_details()
+        z, x, y = robot.get_position()
         self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
-        z, x, y = robot.get_notify_details()
+        z, x, y = robot.get_position()
         self._map[z, x, y] = MapObject.OBSTACLE
 
     def _robot_notify_want_run_callback(self, robot):
@@ -41,6 +57,7 @@ class MainDriver(object):
 
     def _set_robot_status(self, robot, status):
         self._robots_status[robot.get_id()] = (self._robots_status[robot.get_id()][0], status)
+        robot.set_status(status)
 
     def _next_robot_step(self, robot):
         step, status = self._robots_status[robot.get_id()]
@@ -63,20 +80,6 @@ class MainDriver(object):
     def _set_map_field(self, coordinates, status):
         z, x, y = coordinates
         self._map[z, x, y] = status
-
-    def __init__(self, map, robots):
-        self._map = map
-        self._robots = robots
-        self._paths = {r.get_id(): [] for r in robots}
-        self._robots_status = {r.get_id(): (-1, RobotStatus.STOP) for r in robots}
-
-        self.callbacks = {
-            RobotNotification.NONE: MainDriver._robot_notify_none_callback,
-            RobotNotification.ARRIVED: self._robot_notify_arrived_callback,
-            RobotNotification.FOUND_HUMAN: self._robot_notify_found_human_callback,
-            RobotNotification.FOUND_OBSTACLE: self._robot_notify_found_obstacle_callback,
-            RobotNotification.WANT_RUN: self._robot_notify_want_run_callback,
-        }
 
     @staticmethod
     def _get_map_available_next_coords(current_coords, map):
