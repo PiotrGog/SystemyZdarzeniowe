@@ -24,9 +24,11 @@ def map_to_vector(tab):
         if len(tab[i])>2:
             macierz.append(tab[i])
 
-        if tab[i]=='':
-            mapa3D.append(macierz) ##ZAWSZE DODAJE OSTATNIE PIETRO
+        if tab[i]=='' and len(macierz)>0:
+            mapa3D.append(macierz.copy())
             macierz.clear()
+
+    mapa3D.append(macierz.copy())
 
     return mapa3D, macierz, tab
 
