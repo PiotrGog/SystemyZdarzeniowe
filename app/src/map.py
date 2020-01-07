@@ -27,7 +27,6 @@ def map_to_vector(tab):
         if tab[i]=='':
             mapa3D.append(macierz) ##ZAWSZE DODAJE OSTATNIE PIETRO
             macierz.clear()
-            pass
 
     return mapa3D, macierz, tab
 
