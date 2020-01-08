@@ -42,7 +42,7 @@ class MapGui(object):
         self._size = (self._width, self._height)
         self._screen = pygame.display.set_mode(self._size)
 
-    def draw(self):
+    def draw(self, wait_time=100):
         pygame.init()
         for p in range(self._map.shape[0]):
             for r in range(self._map.shape[1]):
@@ -57,7 +57,7 @@ class MapGui(object):
                                       self._square_size, self._square_size))
 
         pygame.display.update()
-        pygame.time.wait(100)
+        pygame.time.wait(wait_time)
 
 
 if __name__ == '__main__':
