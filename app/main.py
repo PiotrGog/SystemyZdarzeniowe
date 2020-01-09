@@ -18,7 +18,7 @@ def main():
                 robot_driver.RobotDriver(2, m_map)]
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
-        m_driver.plan_random_path(robot=robot, length=100)
+        m_driver.plan_random_path(robot=robot, length=1000)
     m_driver.send_paths_to_robots()
     m_gui = gui.MapGui()
     m_gui2 = gui.MapGui()

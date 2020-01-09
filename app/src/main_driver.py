@@ -52,6 +52,9 @@ class MainDriver(object):
 
     def _robot_notify_want_run_callback(self, robot):
         next_coordinates = self._get_robot_coordinates(robot, 1)
+        next_coordinates_state = self._get_map_field(next_coordinates)
+        if MapObject.EMPTY != next_coordinates_state and MapObject.VISITED != next_coordinates_state:
+            return
         self._set_map_field(next_coordinates, robot.get_id())
         self._set_robot_status(robot, RobotStatus.RUN)
         self._next_robot_step(robot)
