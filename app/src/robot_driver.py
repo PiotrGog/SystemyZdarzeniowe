@@ -14,7 +14,7 @@ class RobotDriver(object):
         self._robot_id = robot_id
         self._path = []
         self._notification = RobotNotification.NONE
-        self._map = map
+        self._map = np.copy(map)
         self._status = (0, RobotStatus.STOP)
 
     def get_notify(self):
@@ -50,6 +50,7 @@ class RobotDriver(object):
             self._notification = RobotNotification.FOUND_HUMAN
         elif self._map[floor, x, y] == MapObject.OBSTACLE:
             self._notification = RobotNotification.FOUND_OBSTACLE
+        print(self._notification)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
         self._notification = RobotNotification.WANT_RUN

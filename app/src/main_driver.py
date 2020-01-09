@@ -12,7 +12,7 @@ import random
 
 class MainDriver(object):
     def __init__(self, map, robots):
-        self._map = map
+        self._map = np.copy(map)
         self._robots = robots
         self._paths = {r.get_id(): [] for r in robots}
         self._robots_status = {r.get_id(): (-1, RobotStatus.STOP) for r in robots}
@@ -118,8 +118,12 @@ class MainDriver(object):
         self._paths[id] = [robot_position_plan_path]  # reset path list
         self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
         for step in range(path_length):  # create path starting from current position
-            available_coords = MainDriver._get_map_available_next_coords(robot_position_plan_path, self._map)
-            robot_position_plan_path = random.choice(available_coords)
+            available_coords = set(MainDriver._get_map_available_next_coords(robot_position_plan_path, self._map))
+            robot_position_plan_path_next = random.choice(list(available_coords))
+            while robot_position_plan_path_next in self._paths[id] and len(available_coords) > 1:
+                available_coords.remove(robot_position_plan_path_next)
+                robot_position_plan_path_next = random.choice(list(available_coords))
+            robot_position_plan_path = robot_position_plan_path_next
             self._paths[id].append(robot_position_plan_path)
         return self._paths[id]
 
