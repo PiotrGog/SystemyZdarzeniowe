@@ -44,6 +44,21 @@ class RobotDriver(object):
     def set_path(self, path):
         self._path = path
 
+    def _arrived_event(self):
+        self._notification = RobotNotification.ARRIVED
+
+    def _want_run_event(self):
+        self._notification = RobotNotification.WANT_RUN
+
+    def _found_human_event(self):
+        self._notification = RobotNotification.FOUND_HUMAN
+
+    def _found_obstacle_event(self):
+        self._notification = RobotNotification.FOUND_OBSTACLE
+
+    def _none_event(self):
+        self._notification = RobotNotification.NONE
+
     def detect_obstacle(self):  # wykrycie przeszkody z mapy rzeczywistej
         floor, x, y = self._path[self._status[0]]
         if self._map[floor, x, y] == MapObject.HUMAN:
@@ -53,6 +68,9 @@ class RobotDriver(object):
         print(self._notification)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
+        if self._status[0] == len(self._path) - 1:
+            self._notification = RobotNotification.ARRIVED
+            return
         self._notification = RobotNotification.WANT_RUN
         if self._status[1] == RobotStatus.RUN:
             # time_rand = random.random() * 5

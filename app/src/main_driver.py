@@ -40,11 +40,13 @@ class MainDriver(object):
 
     def _robot_notify_found_human_callback(self, robot):
         self._set_map_field(robot.get_position(), MapObject.HUMAN)
+        self._set_robot_status(robot, RobotStatus.STOP)
         # z, x, y = robot.get_position()
         # self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
         self._set_map_field(robot.get_position(), MapObject.OBSTACLE)
+        self._set_robot_status(robot, RobotStatus.STOP)
         # z, x, y = robot.get_position()
         # self._map[z, x, y] = MapObject.OBSTACLE
 
