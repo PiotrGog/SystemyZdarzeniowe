@@ -257,9 +257,9 @@ temporary_map_1_floors = np.array(
 temporary_map_1_floors_small = np.array(
     [[[W, W, W, W, W, W, W, W, W, W, ],
       [W, E, E, E, E, E, E, E, E, W, ],
-      [W, E, E, E, E, E, E, E, E, W, ],
-      [W, E, E, E, E, E, E, E, E, W, ],
-      [W, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, O, O, E, E, E, E, W, ],
+      [W, E, E, O, O, E, E, E, E, W, ],
+      [W, E, E, O, O, E, E, E, E, W, ],
       [W, E, E, E, E, E, E, E, E, W, ],
       [W, E, E, E, E, E, E, E, E, W, ],
       [W, E, E, E, E, E, E, E, E, W, ],

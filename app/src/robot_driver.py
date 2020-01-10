@@ -20,6 +20,16 @@ class RobotDriver(object):
         self._humans = []
         self._movement_iterations = 0
 
+    def read_and_clear_obstacles(self):
+        res = self._obstacles
+        self._obstacles = []
+        return res
+
+    def read_and_clear_humans(self):
+        res = self._humans
+        self._humans = []
+        return res
+
     def get_notify(self):
         return self._notification
 
@@ -64,18 +74,22 @@ class RobotDriver(object):
 
     def detect_obstacle(self):  # wykrycie przeszkody z mapy rzeczywistej
         floor, x, y = self._path[self._status[0]]
+        floors, x_max, y_max = self._map.shape
+        self._notification = RobotNotification.NONE
         for x_i in range(3):
             for y_i in range(3):
                 new_x = x - 1 + x_i
                 new_y = y - 1 + y_i
-                if self._map[floor, new_x, new_y] == MapObject.HUMAN:
-                    self._notification = RobotNotification.FOUND_HUMAN
-                    self._humans.append((floor, new_x, new_y))
-                elif self._map[floor, new_x, new_y] == MapObject.OBSTACLE:
-                    self._notification = RobotNotification.FOUND_OBSTACLE
-                    self._obstacles.append((floor, new_x, new_y))
-                else:
-                    self._notification = RobotNotification.NONE
+                if 0 <= new_x < x_max and 0 <= new_y < y_max:
+                    if self._map[floor, new_x, new_y] == MapObject.HUMAN:
+                        self._notification = RobotNotification.FOUND_HUMAN
+                        self._humans.append((floor, new_x, new_y))
+                        self._map[floor, new_x, new_y] = MapObject.EMPTY
+                    elif self._map[floor, new_x, new_y] == MapObject.OBSTACLE:
+                        self._notification = RobotNotification.FOUND_OBSTACLE
+                        self._obstacles.append((floor, new_x, new_y))
+                        self._map[floor, new_x, new_y] = MapObject.EMPTY
+
         print(self._notification)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
