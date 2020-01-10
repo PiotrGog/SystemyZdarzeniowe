@@ -16,6 +16,9 @@ class RobotDriver(object):
         self._notification = RobotNotification.NONE
         self._map = np.copy(map)
         self._status = (0, RobotStatus.STOP)
+        self._obstacles = []
+        self._humans = []
+        self._movement_iterations = 0
 
     def get_notify(self):
         return self._notification
@@ -61,21 +64,46 @@ class RobotDriver(object):
 
     def detect_obstacle(self):  # wykrycie przeszkody z mapy rzeczywistej
         floor, x, y = self._path[self._status[0]]
-        if self._map[floor, x, y] == MapObject.HUMAN:
-            self._notification = RobotNotification.FOUND_HUMAN
-        elif self._map[floor, x, y] == MapObject.OBSTACLE:
-            self._notification = RobotNotification.FOUND_OBSTACLE
+        for x_i in range(3):
+            for y_i in range(3):
+                new_x = x - 1 + x_i
+                new_y = y - 1 + y_i
+                if self._map[floor, new_x, new_y] == MapObject.HUMAN:
+                    self._notification = RobotNotification.FOUND_HUMAN
+                    self._humans.append((floor, new_x, new_y))
+                elif self._map[floor, new_x, new_y] == MapObject.OBSTACLE:
+                    self._notification = RobotNotification.FOUND_OBSTACLE
+                    self._obstacles.append((floor, new_x, new_y))
+                else:
+                    self._notification = RobotNotification.NONE
         print(self._notification)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
-        if self._status[0] == len(self._path) - 1:
-            self._notification = RobotNotification.ARRIVED
-            return
-        self._notification = RobotNotification.WANT_RUN
-        if self._status[1] == RobotStatus.RUN:
-            # time_rand = random.random() * 5
-            # time.sleep(time_rand)
+        robot_state = self.get_status()[1]
+        if robot_state == RobotStatus.RUN:  # while still not arrived
+            if self._notification == RobotNotification.WANT_RUN:
+                self._status = (self._status[0] + 1, RobotStatus.RUN)
+                self._notification = RobotNotification.NONE
+            if self._movement_iterations > 0:
+                self._movement_iterations -= 1  # decrease iterations steps
+            elif self._movement_iterations <= 0:
+                self._notification = RobotNotification.ARRIVED  # if arrived notify main driver
+                self._status = (self._status[0], RobotStatus.STOP)
+
+        elif robot_state == RobotStatus.STOP:
             self.detect_obstacle()
-            if self._notification != RobotNotification.FOUND_OBSTACLE:
-                self._status = (self._status[0] + 1, RobotStatus.STOP)
-                self._notification = RobotNotification.ARRIVED
+            if self._notification == RobotNotification.NONE:
+                self._notification = RobotNotification.WANT_RUN
+                self._movement_iterations = random.randint(5, 10)
+
+        # if self._status[0] == len(self._path) - 1:
+        #     self._notification = RobotNotification.ARRIVED
+        #     return
+        # self._notification = RobotNotification.WANT_RUN
+        # if self._status[1] == RobotStatus.RUN:
+        #     # time_rand = random.random() * 5
+        #     # time.sleep(time_rand)
+        #     self.detect_obstacle()
+        #     if self._notification != RobotNotification.FOUND_OBSTACLE:
+        #         self._status = (self._status[0] + 1, RobotStatus.STOP)
+        #         self._notification = RobotNotification.ARRIVED

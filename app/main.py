@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    draw_pause_time_ms = 100
+    draw_pause_time_ms = 1
     m_map = temporary_map.temporary_map_1_floors
     m_real_map = random_obstacles_generator.random_obstacles_generator(temporary_map.temporary_map_1_floors, 0.1, 0.05)
     print(m_map.shape)
