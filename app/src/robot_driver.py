@@ -10,9 +10,12 @@ import time
 
 
 class RobotDriver(object):
-    def __init__(self, robot_id, map):
+    def __init__(self, robot_id, map, initial_localization=None):
+        if initial_localization is None:
+            initial_localization = random.choice(
+                [tuple(e) for e in np.argwhere(map == MapObject.EMPTY)])
         self._robot_id = robot_id
-        self._path = []
+        self._path = [initial_localization]
         self._notification = RobotNotification.NONE
         self._map = np.copy(map)
         self._status = (0, RobotStatus.STOP)
@@ -50,6 +53,9 @@ class RobotDriver(object):
 
     def set_status(self, state):
         self._status = (self._status[0], state)
+
+    def set_step(self, step):
+        self._status = (step, self._status[1])
 
     def get_id(self):
         return self._robot_id
@@ -91,6 +97,9 @@ class RobotDriver(object):
                         self._map[floor, new_x, new_y] = MapObject.EMPTY
 
         print(self._notification)
+        print(self.get_position())
+        print(self._obstacles)
+        print(self._humans)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
         robot_state = self.get_status()[1]

@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 
 
 def main():
-    draw_pause_time_ms = 1
+    draw_pause_time_ms = 5
     m_map = temporary_map.temporary_map_1_floors
     m_real_map = random_obstacles_generator.random_obstacles_generator(temporary_map.temporary_map_1_floors, 0.1,
-                                                                       0.05)
+                                                                       0.00)
     print(m_map.shape)
-    m_robots = [robot_driver.RobotDriver(1, m_real_map),
-                robot_driver.RobotDriver(2, m_real_map)]
+    m_robots = []
+    m_robots.append(robot_driver.RobotDriver(1, m_real_map))
+    m_robots.append(robot_driver.RobotDriver(2, m_real_map))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
         m_driver.plan_random_path(robot=robot, length=1000)
