@@ -34,7 +34,8 @@ class MainDriver(object):
         if robot_step <= 0:
             return
         prev_coords = self._get_robot_coordinates(robot, -1)
-        self._set_map_field(prev_coords, MapObject.VISITED)
+        if type(self._get_map_field(prev_coords)) != MapObject:
+            self._set_map_field(prev_coords, MapObject.VISITED)
         floor, x, y = prev_coords
         floors, x_max, y_max = self._map.shape
         for x_i in range(3):
@@ -108,18 +109,30 @@ class MainDriver(object):
     @staticmethod
     def _get_map_available_next_coords(current_coords, map):
         available_coords = []
+        non_visited_coords = []
         z_c, x_c, y_c = current_coords
         if MapObject.STEPS == map[z_c, x_c, y_c]:
             for z in range(z_c - 1, z_c + 2, 2):
                 if 0 <= z < map.shape[0]:
                     available_coords.append((z, x_c, y_c))
+                    if map[z, x_c, y_c] != MapObject.VISITED:
+                        non_visited_coords.append((z, x_c, y_c))
         for x in range(x_c - 1, x_c + 2, 2):
-            if 0 <= x < map.shape[1] and (map[z_c, x, y_c] == MapObject.EMPTY or map[z_c, x, y_c] == MapObject.VISITED):
+            if 0 <= x < map.shape[1] and (map[z_c, x, y_c] == MapObject.EMPTY
+                                          or map[z_c, x, y_c] == MapObject.VISITED
+                                          or map[z_c, x, y_c] == MapObject.STEPS):
                 available_coords.append((z_c, x, y_c))
+                if map[z_c, x, y_c] != MapObject.VISITED:
+                    non_visited_coords.append((z_c, x, y_c))
         for y in range(y_c - 1, y_c + 2, 2):
-            if 0 <= y < map.shape[2] and (map[z_c, x_c, y] == MapObject.EMPTY or map[z_c, x_c, y] == MapObject.VISITED):
+            if 0 <= y < map.shape[2] and (map[z_c, x_c, y] == MapObject.EMPTY
+                                          or map[z_c, x_c, y] == MapObject.VISITED
+                                          or map[z_c, x_c, y] == MapObject.STEPS):
                 available_coords.append((z_c, x_c, y))
-        return available_coords
+                if map[z_c, x_c, y] != MapObject.VISITED:
+                    non_visited_coords.append((z_c, x_c, y))
+
+        return non_visited_coords if len(non_visited_coords) > 0 else available_coords
 
     def get_map(self):
         return self._map
