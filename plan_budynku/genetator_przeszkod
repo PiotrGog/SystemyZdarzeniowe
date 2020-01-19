@@ -1,8 +1,12 @@
 import random
 import copy
 
-CZLOWIEK=4
-PRZESZKODA=3
+CZLOWIEK='H'
+PRZESZKODA='O'
+SCHODY='S'
+SCIANA='W'
+PUSTO='E'
+
 
 #pobiera dane
 def give_pietra():
@@ -59,11 +63,24 @@ def add_object(tab, ilosc, obiekt):
         x=random.randint(1, len(tab)-1)
         y=random.randint(1, len(tab[0])-2)
 
-        tab[x][y]=int(tab[x][y])
-        if tab[x][y]==0:
+        if tab[x][y]=='E':
             tab[x][y]=obiekt
         else:
             j+=1
+    return tab
+
+def switch_object(tab):
+    for szerokosc in range(len(tab)):
+        for wysokosc in range(len(tab[0])-1):
+            if tab[szerokosc][wysokosc]=='0':
+                tab[szerokosc][wysokosc]='E'
+
+            elif tab[szerokosc][wysokosc]=='2' or tab[szerokosc][wysokosc]=='3':
+                tab[szerokosc][wysokosc]='S'
+
+            else:
+                tab[szerokosc][wysokosc]='W'
+
     return tab
 
 def give_name_save():
@@ -128,13 +145,13 @@ def main():
     for i in range(pietra):
         nazwa, ludzie, przeszkody=give_file_dane()
         plan=separator(read_file(nazwa))
+        plan = switch_object(plan)
 
         czysty_plan=copy.deepcopy(plan)
         #print_in_terminal(czysty_plan)
 
         plan=add_object(plan, ludzie, CZLOWIEK)
         plan=add_object(plan, przeszkody, PRZESZKODA)
-
         #print_in_terminal(plan)
 
         if i==0:
