@@ -46,6 +46,13 @@ def swap(a, b):
     a, b = b, a
     return a, b
 
-d, m, r=map_to_vector(read_file("t_czysta.rmap")) #zmienic później na wczytywanie róznych def give_name()
+d, m, r=map_to_vector(read_file(give_name())) #zmienic później na wczytywanie róznych def give_name()
 
-print_map_terminal(d[2]) #[pietro] -wyswietla po jednym pietrze
+#print_map_terminal(d[1]) #[pietro] -wyswietla po jednym pietrze
+
+print_map_terminal(d[1]) #[pietro] -wyswietla po jednym pietrze
+
+
+
+
+
