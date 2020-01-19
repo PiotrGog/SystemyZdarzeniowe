@@ -1,5 +1,6 @@
 import random
 import copy
+import os
 
 CZLOWIEK='H'
 PRZESZKODA='O'
@@ -17,7 +18,7 @@ def give_pietra():
 
 #pobiera nazwe
 def give_file_dane():
-    nazwa_pliku=input("Podaj nazwe pliku: ")
+    nazwa_pliku=input("Podaj nazwe folderu zawierajacego mapy: ")
 
     ilosc_ludzi=input("Podaj liczbe ludzi: ")
     ilosc_przeszkod=input("Podaj liczbe przeszkod: ")
@@ -138,26 +139,49 @@ def save(nazwa, ilosc_pieter, tryb, pietro, ilosc_ludzi, ilosc_przeszkod, tablic
             plik.write(" " + str(tablica_czysta[len(tablica_czysta) - 1][j]))
     plik.close()
 
-def main():
-    pietra=give_pietra()
-    nazwa_do_zapisu=give_name_save()
+def listDirectory(directory):
+    fileList = [os.path.normcase(f) for f in os.listdir(directory)]    #(1) (2)
+    return fileList
+
+def przetworzenie_danych_wejsciowych(ludzie, przeszkody, pietra):
+    tab_ludzie=[]
+    tab_przeszkody=[]
 
     for i in range(pietra):
-        nazwa, ludzie, przeszkody=give_file_dane()
-        plan=separator(read_file(nazwa))
+        tab_ludzie.append(random.randint(0, ludzie))
+        ludzie=ludzie-tab_ludzie[i]
+
+        tab_przeszkody.append(random.randint(0, przeszkody))
+        przeszkody=przeszkody-tab_przeszkody[i]
+
+    return tab_ludzie, tab_przeszkody
+
+def main():
+    #pietra=give_pietra()
+    nazwa, ludzie, przeszkody=give_file_dane()
+    nazwa_do_zapisu = give_name_save()
+
+    lista_plikow=listDirectory(nazwa)
+    pietra=len(lista_plikow)
+    tab_ludzie, tab_przeszkody=przetworzenie_danych_wejsciowych(ludzie, przeszkody, pietra)
+
+    for i in range(pietra):
+        do_otwarcia=os.path.join(nazwa, lista_plikow[i])
+        print(do_otwarcia)
+        plan=separator(read_file(do_otwarcia))
         plan = switch_object(plan)
 
         czysty_plan=copy.deepcopy(plan)
         #print_in_terminal(czysty_plan)
 
-        plan=add_object(plan, ludzie, CZLOWIEK)
-        plan=add_object(plan, przeszkody, PRZESZKODA)
+        plan=add_object(plan, tab_ludzie[i], CZLOWIEK)
+        plan=add_object(plan, tab_przeszkody[i], PRZESZKODA)
         #print_in_terminal(plan)
 
         if i==0:
             tryb='w'
         else:
             tryb='a'
-        save(nazwa_do_zapisu, pietra, tryb, i, ludzie, przeszkody, plan, czysty_plan)
+        save(nazwa_do_zapisu, pietra, tryb, i, tab_ludzie[i], tab_przeszkody[i], plan, czysty_plan)
 
 main()
