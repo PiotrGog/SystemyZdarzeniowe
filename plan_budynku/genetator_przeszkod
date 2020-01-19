@@ -95,7 +95,7 @@ def save(nazwa, ilosc_pieter, tryb, pietro, ilosc_ludzi, ilosc_przeszkod, tablic
     plik = open(n_przeszkody, tryb)
     if tryb == 'w':
         plik.write(str(ilosc_pieter))
-        plik.write('\n')
+    plik.write('\n')
     plik.write('\n')
     plik.write(str(pietro))
     plik.write('\n')
@@ -119,7 +119,7 @@ def save(nazwa, ilosc_pieter, tryb, pietro, ilosc_ludzi, ilosc_przeszkod, tablic
     plik = open(n_czysta, tryb)
     if tryb == 'w':
         plik.write(str(ilosc_pieter))
-        plik.write('\n')
+    plik.write('\n')
     plik.write('\n')
     plik.write(str(pietro))
     plik.write('\n')
