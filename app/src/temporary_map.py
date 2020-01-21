@@ -265,3 +265,27 @@ temporary_map_1_floors_small = np.array(
       [W, E, E, E, E, E, E, E, E, W, ],
       [W, E, E, E, E, E, E, E, E, W, ],
       [W, W, W, W, W, W, W, W, W, W, ]]])
+
+temporary_map_1_floors_rooms = np.array(
+    [[[W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, W, W, W, W, W, W, W, W, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, E, E, E, E, E, E, E, E, W, E, E, E, E, E, E, E, E, E, E, E, E, E, E, W, ],
+      [W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, ]]])
