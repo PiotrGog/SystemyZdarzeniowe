@@ -1,7 +1,18 @@
 from src.consts import MapObject
 from enum import Enum
-import pygame
 from src import temporary_map
+import random
+import pygame
+
+
+class Color:
+    def __init__(self, value):
+        self.value = value
+
+
+def random_color_generator():
+    # RGB color
+    return Color((random.randint(1, 254), random.randint(1, 254), random.randint(1, 254)))
 
 
 class Colors(Enum):
@@ -32,6 +43,7 @@ class MapGui(object):
         self._width = None
         self._size = None
         self._screen = None
+        self._others_colors = dict()
 
     def update(self, map):
         self._map = map
@@ -42,7 +54,7 @@ class MapGui(object):
         self._size = (self._width, self._height)
         self._screen = pygame.display.set_mode(self._size)
 
-    def draw(self):
+    def draw(self, wait_time=100):
         pygame.init()
         for p in range(self._map.shape[0]):
             for r in range(self._map.shape[1]):
@@ -51,13 +63,17 @@ class MapGui(object):
                     if element in self.MAP_OBJECT_TO_COLOR:
                         color = self.MAP_OBJECT_TO_COLOR[element]
                     else:
-                        color = Colors.GREEN
+                        # color = Colors.GREEN
+                        color = self._others_colors.get(element, None)
+                        if color is None:
+                            color = random_color_generator()
+                            self._others_colors[element] = color
                     pygame.draw.rect(self._screen, color.value,
                                      (c * self._square_size + p * 30 * self._square_size, (r + 1) * self._square_size,
                                       self._square_size, self._square_size))
 
         pygame.display.update()
-        pygame.time.wait(100)
+        pygame.time.wait(wait_time)
 
 
 if __name__ == '__main__':
