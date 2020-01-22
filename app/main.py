@@ -17,7 +17,7 @@ def main():
     print(m_map.shape)
     m_robots = []
     m_robots.append(robot_driver.RobotDriver(1, m_real_map))
-    # m_robots.append(robot_driver.RobotDriver(2, m_real_map))
+    m_robots.append(robot_driver.RobotDriver(2, m_real_map))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
         # m_driver.plan_random_path(robot=robot, length=1000)
@@ -58,21 +58,37 @@ def close_rooms(map):
     result = np.copy(map)
     result_last = None
     z_size, x_size, y_size = result.shape
-
+    W = MapObject.WALL
+    E = MapObject.EMPTY
+    mask1 = np.array([[E, W, E],
+                      [E, E, E]])
+    mask2 = np.array([[E, E, E],
+                      [E, W, E]])
+    mask3 = np.array([[E, E],
+                      [W, E],
+                      [E, E]])
+    mask4 = np.array([[E, E],
+                      [E, W],
+                      [E, E]])
     while not np.array_equal(result_last, result):
         result_last = np.copy(result)
         for z in range(z_size):
-            for x in range(x_size):
-                for y in range(y_size):
-                    if x + 1 < x_size and np.count_nonzero(result[z, x - 1:x + 1, y] == consts.MapObject.WALL) == 2:
-                        result[z, x + 1, y] = consts.MapObject.WALL
-                    if x - 1 >= 0 and np.count_nonzero(result[z, x:x + 2, y] == consts.MapObject.WALL) == 2:
-                        result[z, x - 1, y] = consts.MapObject.WALL
-                    if y + 1 < y_size and np.count_nonzero(result[z, x, y - 1:y + 1] == consts.MapObject.WALL) == 2:
+            for x in range(x_size - 1):
+                for y in range(y_size - 2):
+                    if np.all(result[z, x:x + 2, y:y + 3] == mask1):
+                        result[z, x + 1, y + 1] = consts.MapObject.WALL
+                    if np.all(result[z, x:x + 2, y:y + 3] == mask2):
                         result[z, x, y + 1] = consts.MapObject.WALL
-                    if y - 1 >= 0 and np.count_nonzero(result[z, x, y:y + 2] == consts.MapObject.WALL) == 2:
-                        result[z, x, y - 1] = consts.MapObject.WALL
+            for x in range(x_size - 2):
+                for y in range(y_size - 1):
+                    if np.all(result[z, x:x + 3, y:y + 2] == mask3):
+                        result[z, x + 1, y + 1] = consts.MapObject.WALL
+                    if np.all(result[z, x:x + 3, y:y + 2] == mask4):
+                        result[z, x + 1, y] = consts.MapObject.WALL
+
     empty = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(result == consts.MapObject.EMPTY)])
+    diff_walls = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(map == consts.MapObject.EMPTY)]) - empty
+    # visited = set()
     closed = []
     while len(empty) > 0:
         new_element = empty.pop()
@@ -85,7 +101,10 @@ def close_rooms(map):
                 for y in range(y_e - 1, y_e + 2):
                     if (z_e, x, y) in empty:
                         neighbours.append((z_e, x, y))
+                    if (z_e, x, y) in diff_walls:
+                        closed[-1].append((z_e, x, y))
                     empty.discard((z_e, x, y))
+                    diff_walls.discard((z_e, x, y))
     return result, closed
 
 
@@ -192,12 +211,13 @@ def graph_demo():
     plt.show()
 
 
-def close_rooms_demo():
-    m_map = np.copy(temporary_map.temporary_map_1_floors_rooms)
+def close_rooms_demo(robots):
+    m_map = np.copy(temporary_map.temporary_map_2_floors)
     m_gui = gui.MapGui()
     m_gui.update(m_map)
     m_gui.draw(1000)
     m_map_c, closed = close_rooms(m_map)
+    print(len(closed))
     colors = []
     for i, r in enumerate(closed):
         colors.append(i + 1)
@@ -223,8 +243,8 @@ def find_path(map, start, dest):
 
 
 if __name__ == '__main__':
-    graph_demo()
-    # close_rooms_demo()
+    # graph_demo()
+    # close_rooms_demo(1)
     # flood_fill_demo()
     # exit()
     '''

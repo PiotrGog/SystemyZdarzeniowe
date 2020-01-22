@@ -14,10 +14,10 @@ import networkx as nx
 class MainDriver(object):
     def __init__(self, map, robots):
         self._map = np.copy(map)
+        self._empty_map = np.copy(map)
         self._robots = robots
         self._paths = {r.get_id(): r._path.copy() for r in robots}
         self._robots_status = {r.get_id(): (0, RobotStatus.STOP) for r in robots}
-
         self.callbacks = {
             RobotNotification.NONE: MainDriver._robot_notify_none_callback,
             RobotNotification.ARRIVED: self._robot_notify_arrived_callback,
@@ -25,6 +25,17 @@ class MainDriver(object):
             RobotNotification.FOUND_OBSTACLE: self._robot_notify_found_obstacle_callback,
             RobotNotification.WANT_RUN: self._robot_notify_want_run_callback,
         }
+
+        self._robot_area = {r.get_id(): [] for r in robots}
+        self._init_areas()
+
+    def _init_areas(self):
+        map_closed_areas, closed_areas = self._close_areas()
+        sorted_closed_areas = sorted(closed_areas, key=lambda x: len(x))
+        robots_amount = len(self._robots)
+        if len(sorted_closed_areas) > robots_amount:
+            for i, area in enumerate(sorted_closed_areas):
+                self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
 
     def _robot_notify_none_callback(self, robot):
         pass
@@ -161,13 +172,9 @@ class MainDriver(object):
                     G.add_edge((z, x, y), (z + 1, x, y))
                 if G.has_node((z - 1, x, y)) and self._map[z - 1, x, y] == MapObject.STEPS:
                     G.add_edge((z, x, y), (z - 1, x, y))
-
-        # print(G.number_of_nodes())
-        # print(G.number_of_edges())
-        # print(nx.dijkstra_path(G, (0, 5, 5), (1, 5, 5)))
         return nx.dijkstra_path(G, start_pos, dest_pos)
 
-    def _flood_fill(self, start_pos):
+    def _flood_fill(self, start_pos, robot_area):
         tmp_map = np.copy(self._map)
         z, x, y = start_pos
         tmp_map[z, x, y] = MapObject.EMPTY
@@ -177,6 +184,8 @@ class MainDriver(object):
         def flood_fill_helper(start_pos, i):
             z, x, y = start_pos
             if not (0 <= x < x_size and 0 <= y < y_size) or tmp_map[z, x, y] != MapObject.EMPTY:
+                return
+            if not (z, x, y) in robot_area:
                 return
             i = i + 1
             tmp_map[z, x, y] = i
@@ -189,9 +198,62 @@ class MainDriver(object):
         flood_fill_helper(start_pos, 1)
         return path, tmp_map
 
+    def _close_areas(self):
+        result = np.copy(self._map)
+        result_last = None
+        z_size, x_size, y_size = result.shape
+        W = MapObject.WALL
+        E = MapObject.EMPTY
+        mask1 = np.array([[E, W, E],
+                          [E, E, E]])
+        mask2 = np.array([[E, E, E],
+                          [E, W, E]])
+        mask3 = np.array([[E, E],
+                          [W, E],
+                          [E, E]])
+        mask4 = np.array([[E, E],
+                          [E, W],
+                          [E, E]])
+        while not np.array_equal(result_last, result):
+            result_last = np.copy(result)
+            for z in range(z_size):
+                for x in range(x_size - 1):
+                    for y in range(y_size - 2):
+                        if np.all(result[z, x:x + 2, y:y + 3] == mask1):
+                            result[z, x + 1, y + 1] = MapObject.WALL
+                        if np.all(result[z, x:x + 2, y:y + 3] == mask2):
+                            result[z, x, y + 1] = MapObject.WALL
+                for x in range(x_size - 2):
+                    for y in range(y_size - 1):
+                        if np.all(result[z, x:x + 3, y:y + 2] == mask3):
+                            result[z, x + 1, y + 1] = MapObject.WALL
+                        if np.all(result[z, x:x + 3, y:y + 2] == mask4):
+                            result[z, x + 1, y] = MapObject.WALL
+
+        empty = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(result == MapObject.EMPTY)])
+        diff_walls = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(map == MapObject.EMPTY)]) - empty
+        closed = []
+        while len(empty) > 0:
+            new_element = empty.pop()
+            closed.append([])
+            neighbours = [new_element]
+            while len(neighbours) > 0:
+                z_e, x_e, y_e = neighbours.pop(0)
+                closed[-1].append((z_e, x_e, y_e))
+                for x in range(x_e - 1, x_e + 2):
+                    for y in range(y_e - 1, y_e + 2):
+                        if (z_e, x, y) in empty:
+                            neighbours.append((z_e, x, y))
+                        if (z_e, x, y) in diff_walls:
+                            closed[-1].append((z_e, x, y))
+                        empty.discard((z_e, x, y))
+                        diff_walls.discard((z_e, x, y))
+        return result, closed
+
     def plan_path(self, **kwargs):
         robot = kwargs['robot']
         id = robot.get_id()
+        robot_areas = self._robot_area[id]
         current_robot_step, current_robot_status = self._robots_status[id]
 
         robot_coords_list = self._paths[id]  # get robot path list
@@ -202,15 +264,23 @@ class MainDriver(object):
         else:
             self._robots_status[id] = (1, RobotStatus.RUN)
             self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
-        path, _ = self._flood_fill(robot_position_plan_path)
+        # path, _ = self._flood_fill(robot_position_plan_path)
 
         result_path = []
-        for i in range(len(path) - 1):
-            if abs(path[i][1] - path[i + 1][1]) + abs(path[i][2] - path[i + 1][2]) > 1:
-                connect_path = self._graph_connection(path[i], path[i + 1])
-                result_path = result_path + connect_path
-            else:
-                result_path.append(path[i])
+        for area_idx, area in enumerate(robot_areas):
+            path_to_area = self._graph_connection(robot_position_plan_path, area[0])
+            area_init_position = next(x for x in path_to_area if x in set(area))
+            path_to_area = path_to_area[:path_to_area.index((area_init_position))]
+            result_path = result_path + path_to_area
+            robot_position_plan_path = area_init_position
+            path, _ = self._flood_fill(robot_position_plan_path, area)
+            for i in range(len(path) - 1):
+                if abs(path[i][1] - path[i + 1][1]) + abs(path[i][2] - path[i + 1][2]) > 1:
+                    connect_path = self._graph_connection(path[i], path[i + 1])
+                    result_path = result_path + connect_path
+                else:
+                    result_path.append(path[i])
+            robot_position_plan_path = result_path[-1]
         self._paths[id] = result_path
         return self._paths[id]
 
