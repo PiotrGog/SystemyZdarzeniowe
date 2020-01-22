@@ -9,6 +9,7 @@ from .consts import (
 import numpy as np
 import random
 import networkx as nx
+import numbers
 
 
 class MainDriver(object):
@@ -33,7 +34,7 @@ class MainDriver(object):
         map_closed_areas, closed_areas = self._close_areas()
         sorted_closed_areas = sorted(closed_areas, key=lambda x: len(x))
         robots_amount = len(self._robots)
-        if len(sorted_closed_areas) > robots_amount:
+        if len(sorted_closed_areas) >= robots_amount:
             for i, area in enumerate(sorted_closed_areas):
                 self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
 
@@ -155,7 +156,10 @@ class MainDriver(object):
         for z, floor in enumerate(self._map):
             for x, row in enumerate(floor):
                 for y, col in enumerate(row):
-                    if self._map[z, x, y] in available_map_objects or (type(self._map[z, x, y]) == float):
+                    if start_pos == (z, x, y):
+                        print("jksdla")
+                    if self._map[z, x, y] in available_map_objects or \
+                            (isinstance(self._map[z, x, y], numbers.Number) and self._map[z, x, y] > 0):
                         # == MapObject.EMPTY or self._map[z, x, y] == MapObject.STEPS or:
                         G.add_node((z, x, y))
         for (z, x, y), _ in G.nodes.items():
@@ -331,14 +335,14 @@ class MainDriver(object):
             self._robot_notify_arrived_callback(robot)
         elif robot_notification == RobotNotification.FOUND_OBSTACLE:
             self._robot_notify_found_obstacle_callback(robot)
-            self.plan_paths()
+            # self.plan_paths()
             # self.plan_random_paths()
-            self.send_paths_to_robots()
+            # self.send_paths_to_robots()
         elif robot_notification == RobotNotification.FOUND_HUMAN:
             self._robot_notify_found_human_callback(robot)
-            self.plan_paths()
+            # self.plan_paths()
             # self.plan_random_paths()
-            self.send_paths_to_robots()
+            # self.send_paths_to_robots()
         else:
             raise Exception("Illegal notification")
         # robot.reset_notify()

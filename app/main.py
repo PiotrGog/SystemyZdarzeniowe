@@ -13,11 +13,13 @@ from src.consts import MapObject
 def main():
     draw_pause_time_ms = 1
     m_map = temporary_map.temporary_map_2_floors
-    m_real_map = temporary_map.temporary_map_2_floors  # random_obstacles_generator.random_obstacles_generator(temporary_map.temporary_map_2_floors, 0.05, 0.01)
+    m_real_map = random_obstacles_generator.random_obstacles_generator(temporary_map.temporary_map_2_floors, 0.05, 0.01)
     print(m_map.shape)
     m_robots = []
-    m_robots.append(robot_driver.RobotDriver(1, m_real_map))
-    m_robots.append(robot_driver.RobotDriver(2, m_real_map))
+    m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
+    m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
+    # m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
+    # m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
         # m_driver.plan_random_path(robot=robot, length=1000)
@@ -32,26 +34,6 @@ def main():
             m_driver.handle_robot_notify(robot=robot)
         m_gui.update(m_driver.get_map())
         m_gui.draw(draw_pause_time_ms)
-
-
-def dylatacja(img):
-    result = np.copy(img)
-    x_size, y_size = img.shape
-    for x in range(x_size):
-        for y in range(y_size):
-            if np.any(img[x - 1:x + 2, y - 1:y + 2] == consts.MapObject.WALL):
-                result[x, y] = consts.MapObject.WALL
-    return result
-
-
-def erozja(img):
-    result = np.copy(img)
-    x_size, y_size = img.shape
-    for x in range(x_size):
-        for y in range(y_size):
-            if np.any(img[x - 1:x + 2, y - 1:y + 2] == consts.MapObject.EMPTY):
-                result[x, y] = consts.MapObject.EMPTY
-    return result
 
 
 def close_rooms(map):
