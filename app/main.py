@@ -130,26 +130,33 @@ def graph_demo():
                        [W, E, E, E, E, E, W],
                        [W, E, E, E, E, E, W],
                        [W, E, E, E, E, E, W],
-                       [W, W, W, W, W, W, W]]
-                      ])
+                       [W, W, W, W, W, W, W]]])
 
     G = nx.Graph()
-    mmap = m_map[0]
-    for r, row in enumerate(mmap):
-        for c, col in enumerate(row):
-            if mmap[r, c] == E:
-                G.add_node((r, c))
-    for (x, y), _ in G.nodes.items():
-        if G.has_node((x + 1, y)):
-            G.add_edge((x, y), (x + 1, y))
-        if G.has_node((x - 1, y)):
-            G.add_edge((x, y), (x - 1, y))
-        if G.has_node((x, y + 1)):
-            G.add_edge((x, y), (x, y + 1))
-        if G.has_node((x, y - 1)):
-            G.add_edge((x, y), (x, y - 1))
+    mmap = m_map
+    for z, floor in enumerate(mmap):
+        for x, row in enumerate(floor):
+            for y, col in enumerate(row):
+                if mmap[z, x, y] == E or mmap[z, x, y] == S:
+                    G.add_node((z, x, y))
+    for (z, x, y), _ in G.nodes.items():
+        if G.has_node((z, x + 1, y)):
+            G.add_edge((z, x, y), (z, x + 1, y))
+        if G.has_node((z, x - 1, y)):
+            G.add_edge((z, x, y), (z, x - 1, y))
+        if G.has_node((z, x, y + 1)):
+            G.add_edge((z, x, y), (z, x, y + 1))
+        if G.has_node((z, x, y - 1)):
+            G.add_edge((z, x, y), (z, x, y - 1))
+        if mmap[z, x, y] == S:
+            if G.has_node((z + 1, x, y)) and mmap[z + 1, x, y] == S:
+                G.add_edge((z, x, y), (z + 1, x, y))
+            if G.has_node((z - 1, x, y)) and mmap[z - 1, x, y] == S:
+                G.add_edge((z, x, y), (z - 1, x, y))
+
     print(G.number_of_nodes())
     print(G.number_of_edges())
+    print(nx.dijkstra_path(G, (0, 5, 5), (1, 5, 5)))
     nx.draw(G, with_labels=True, font_weight='bold')
     plt.show()
 
@@ -168,7 +175,7 @@ if __name__ == '__main__':
     plt.imshow(tmp[0])
     plt.show()
 '''
-# main()
+main()
 # m_map = temporary_map.temporary_map_1_floors_rooms
 # m_gui = gui.MapGui()
 # m_gui.update(m_map)
