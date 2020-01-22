@@ -8,6 +8,7 @@ from .consts import (
 
 import numpy as np
 import random
+import networkx as nx
 
 
 class MainDriver(object):
@@ -137,16 +138,91 @@ class MainDriver(object):
     def get_map(self):
         return self._map
 
+    def _graph_connection(self, start_pos, dest_pos):
+        G = nx.Graph()
+        available_map_objects = [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED]
+        for z, floor in enumerate(self._map):
+            for x, row in enumerate(floor):
+                for y, col in enumerate(row):
+                    if self._map[z, x, y] in available_map_objects or (type(self._map[z, x, y]) == float):
+                        # == MapObject.EMPTY or self._map[z, x, y] == MapObject.STEPS or:
+                        G.add_node((z, x, y))
+        for (z, x, y), _ in G.nodes.items():
+            if G.has_node((z, x + 1, y)):
+                G.add_edge((z, x, y), (z, x + 1, y))
+            if G.has_node((z, x - 1, y)):
+                G.add_edge((z, x, y), (z, x - 1, y))
+            if G.has_node((z, x, y + 1)):
+                G.add_edge((z, x, y), (z, x, y + 1))
+            if G.has_node((z, x, y - 1)):
+                G.add_edge((z, x, y), (z, x, y - 1))
+            if self._map[z, x, y] == MapObject.STEPS:
+                if G.has_node((z + 1, x, y)) and self._map[z + 1, x, y] == MapObject.STEPS:
+                    G.add_edge((z, x, y), (z + 1, x, y))
+                if G.has_node((z - 1, x, y)) and self._map[z - 1, x, y] == MapObject.STEPS:
+                    G.add_edge((z, x, y), (z - 1, x, y))
+
+        # print(G.number_of_nodes())
+        # print(G.number_of_edges())
+        # print(nx.dijkstra_path(G, (0, 5, 5), (1, 5, 5)))
+        return nx.dijkstra_path(G, start_pos, dest_pos)
+
+    def _flood_fill(self, start_pos):
+        tmp_map = np.copy(self._map)
+        z, x, y = start_pos
+        tmp_map[z, x, y] = MapObject.EMPTY
+        z_size, x_size, y_size = self._map.shape
+        path = []
+
+        def flood_fill_helper(start_pos, i):
+            z, x, y = start_pos
+            if not (0 <= x < x_size and 0 <= y < y_size) or tmp_map[z, x, y] != MapObject.EMPTY:
+                return
+            i = i + 1
+            tmp_map[z, x, y] = i
+            path.append((z, x, y))
+            flood_fill_helper((z, x + 1, y), i)
+            flood_fill_helper((z, x - 1, y), i)
+            flood_fill_helper((z, x, y + 1), i)
+            flood_fill_helper((z, x, y - 1), i)
+
+        flood_fill_helper(start_pos, 1)
+        return path, tmp_map
+
+    def plan_path(self, **kwargs):
+        robot = kwargs['robot']
+        id = robot.get_id()
+        current_robot_step, current_robot_status = self._robots_status[id]
+
+        robot_coords_list = self._paths[id]  # get robot path list
+        robot_position_plan_path = robot_coords_list[current_robot_step]  # get current robot position
+        if current_robot_status == RobotStatus.STOP:
+            self._paths[id] = [robot_position_plan_path]  # reset path list
+            self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
+        else:
+            self._robots_status[id] = (1, RobotStatus.RUN)
+            self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
+        path, _ = self._flood_fill(robot_position_plan_path)
+
+        result_path = []
+        for i in range(len(path) - 1):
+            if abs(path[i][1] - path[i + 1][1]) + abs(path[i][2] - path[i + 1][2]) > 1:
+                connect_path = self._graph_connection(path[i], path[i + 1])
+                result_path = result_path + connect_path
+            else:
+                result_path.append(path[i])
+        self._paths[id] = result_path
+        return self._paths[id]
+
+    def plan_paths(self, **kwargs):
+        for robot in self._robots:
+            self.plan_path(robot=robot)
+
     def plan_random_path(self, **kwargs):
         path_length = kwargs['length']
         robot = kwargs['robot']
         id = robot.get_id()
         current_robot_step, current_robot_status = self._robots_status[id]
-        # if -1 == current_robot_step:  # if no path was planned before
-        #     empty_spot = random.choice(
-        #         [tuple(e) for e in np.argwhere(self._map != MapObject.WALL)])  # find empty spot (no walls)
-        #     self._paths[robot.get_id()] = [empty_spot]  # create robot path list with that position
-        #     self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
 
         robot_coords_list = self._paths[id]  # get robot path list
         robot_position_plan_path = robot_coords_list[current_robot_step]  # get current robot position
@@ -185,11 +261,13 @@ class MainDriver(object):
             self._robot_notify_arrived_callback(robot)
         elif robot_notification == RobotNotification.FOUND_OBSTACLE:
             self._robot_notify_found_obstacle_callback(robot)
-            self.plan_random_paths()
+            self.plan_paths()
+            # self.plan_random_paths()
             self.send_paths_to_robots()
         elif robot_notification == RobotNotification.FOUND_HUMAN:
             self._robot_notify_found_human_callback(robot)
-            self.plan_random_paths()
+            self.plan_paths()
+            # self.plan_random_paths()
             self.send_paths_to_robots()
         else:
             raise Exception("Illegal notification")
