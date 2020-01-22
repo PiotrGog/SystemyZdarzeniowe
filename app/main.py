@@ -89,15 +89,93 @@ def close_rooms(map):
     return result, closed
 
 
+def flood_fill(map, start_pos):
+    tmp_map = np.copy(map)
+    z_size, x_size, y_size = map.shape
+    path = []
+
+    def flood_fill_helper(start_pos, i):
+        x, y = start_pos
+        if not (0 <= x < x_size and 0 <= y < y_size) or tmp_map[0, x, y] != 0:
+            return
+        i = i + 1
+        tmp_map[0, x, y] = i
+        path.append((x, y))
+        flood_fill_helper((x + 1, y), i)
+        flood_fill_helper((x - 1, y), i)
+        flood_fill_helper((x, y + 1), i)
+        flood_fill_helper((x, y - 1), i)
+
+    flood_fill_helper(start_pos, 1)
+    return path, tmp_map
+
+
+def graph_demo():
+    W = consts.MapObject.WALL
+    E = consts.MapObject.EMPTY
+    S = consts.MapObject.STEPS
+
+    m_map = np.array([[[W, W, W, W, W, W, W],
+                       [W, S, S, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, W, W, W, W, W, W]],
+                      [[W, W, W, W, W, W, W],
+                       [W, S, S, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, E, E, E, E, E, W],
+                       [W, W, W, W, W, W, W]]
+                      ])
+
+    G = nx.Graph()
+    mmap = m_map[0]
+    for r, row in enumerate(mmap):
+        for c, col in enumerate(row):
+            if mmap[r, c] == E:
+                G.add_node((r, c))
+    for (x, y), _ in G.nodes.items():
+        if G.has_node((x + 1, y)):
+            G.add_edge((x, y), (x + 1, y))
+        if G.has_node((x - 1, y)):
+            G.add_edge((x, y), (x - 1, y))
+        if G.has_node((x, y + 1)):
+            G.add_edge((x, y), (x, y + 1))
+        if G.has_node((x, y - 1)):
+            G.add_edge((x, y), (x, y - 1))
+    print(G.number_of_nodes())
+    print(G.number_of_edges())
+    nx.draw(G, with_labels=True, font_weight='bold')
+    plt.show()
+
+
+def find_path(map, start, dest):
+    pass
+
+
 if __name__ == '__main__':
-    # main()
-    m_map = temporary_map.temporary_map_1_floors_rooms
-    m_gui = gui.MapGui()
-    m_gui.update(m_map)
-    m_gui.draw(1000)
-    m_map_c, closed = close_rooms(m_map)
-    for i, r in enumerate(closed):
-        for c in r:
-            m_map[c[0], c[1], c[2]] = i + 1
-    m_gui.update(m_map)
-    m_gui.draw(1000)
+    graph_demo()
+'''
+    space = np.zeros((1, 10, 10))
+    path, tmp = flood_fill(space, start_pos=(5, 5))
+    print(path)
+
+    plt.imshow(tmp[0])
+    plt.show()
+'''
+# main()
+# m_map = temporary_map.temporary_map_1_floors_rooms
+# m_gui = gui.MapGui()
+# m_gui.update(m_map)
+# m_gui.draw(1000)
+# m_map_c, closed = close_rooms(m_map)
+# for i, r in enumerate(closed):
+#     for c in r:
+#         m_map[c[0], c[1], c[2]] = i + 1
+# m_gui.update(m_map)
+# m_gui.draw(1000)
