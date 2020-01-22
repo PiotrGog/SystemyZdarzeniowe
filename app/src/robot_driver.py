@@ -14,6 +14,7 @@ class RobotDriver(object):
         if initial_localization is None:
             initial_localization = random.choice(
                 [tuple(e) for e in np.argwhere(map == MapObject.EMPTY)])
+        self._initial_localization = initial_localization
         self._robot_id = robot_id
         self._path = [initial_localization]
         self._notification = RobotNotification.NONE
@@ -115,9 +116,9 @@ class RobotDriver(object):
 
         elif robot_state == RobotStatus.STOP:
             self.detect_obstacle()
-            if self._notification == RobotNotification.NONE:
+            if self._notification == RobotNotification.NONE and self.get_status()[0] < len(self._path) - 1:
                 self._notification = RobotNotification.WANT_RUN
-                self._movement_iterations = random.randint(10, 20)
+                self._movement_iterations = random.randint(1, 2)
 
         # if self._status[0] == len(self._path) - 1:
         #     self._notification = RobotNotification.ARRIVED

@@ -285,6 +285,8 @@ class MainDriver(object):
                 else:
                     result_path.append(path[i])
             robot_position_plan_path = result_path[-1]
+        return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
+        result_path = result_path + return_path
         self._paths[id] = result_path
         return self._paths[id]
 
