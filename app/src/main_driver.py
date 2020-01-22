@@ -29,6 +29,8 @@ class MainDriver(object):
 
         self._robot_area = {r.get_id(): [] for r in robots}
         self._init_areas()
+        self._map_graph = nx.Graph()
+        self._init_graph()
 
     def _init_areas(self):
         map_closed_areas, closed_areas = self._close_areas()
@@ -37,6 +39,29 @@ class MainDriver(object):
         if len(sorted_closed_areas) >= robots_amount:
             for i, area in enumerate(sorted_closed_areas):
                 self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
+
+    def _init_graph(self):
+        available_map_objects = [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED]
+        for z, floor in enumerate(self._map):
+            for x, row in enumerate(floor):
+                for y, col in enumerate(row):
+                    if self._map[z, x, y] in available_map_objects or \
+                            (isinstance(self._map[z, x, y], numbers.Number) and self._map[z, x, y] > 0):
+                        self._map_graph.add_node((z, x, y))
+        for (z, x, y), _ in self._map_graph.nodes.items():
+            if self._map_graph.has_node((z, x + 1, y)):
+                self._map_graph.add_edge((z, x, y), (z, x + 1, y))
+            if self._map_graph.has_node((z, x - 1, y)):
+                self._map_graph.add_edge((z, x, y), (z, x - 1, y))
+            if self._map_graph.has_node((z, x, y + 1)):
+                self._map_graph.add_edge((z, x, y), (z, x, y + 1))
+            if self._map_graph.has_node((z, x, y - 1)):
+                self._map_graph.add_edge((z, x, y), (z, x, y - 1))
+            if self._map[z, x, y] == MapObject.STEPS:
+                if self._map_graph.has_node((z + 1, x, y)) and self._map[z + 1, x, y] == MapObject.STEPS:
+                    self._map_graph.add_edge((z, x, y), (z + 1, x, y))
+                if self._map_graph.has_node((z - 1, x, y)) and self._map[z - 1, x, y] == MapObject.STEPS:
+                    self._map_graph.add_edge((z, x, y), (z - 1, x, y))
 
     def _robot_notify_none_callback(self, robot):
         pass
@@ -64,20 +89,28 @@ class MainDriver(object):
     def _robot_notify_found_human_callback(self, robot):
         # self._set_map_field(robot.get_position(), MapObject.HUMAN)
         self._set_robot_status(robot, RobotStatus.STOP)
-        for coords in robot.read_and_clear_obstacles():
+        obstacles = robot.read_and_clear_obstacles()
+        humans = robot.read_and_clear_humans()
+        for coords in obstacles:
             self._set_map_field(coords, MapObject.OBSTACLE)
-        for coords in robot.read_and_clear_humans():
+        for coords in humans:
             self._set_map_field(coords, MapObject.HUMAN)
+        self._map_graph.remove_nodes_from(humans)
+        self._map_graph.remove_nodes_from(obstacles)
         # z, x, y = robot.get_position()
         # self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
         # self._set_map_field(robot.get_position(), MapObject.OBSTACLE)
         self._set_robot_status(robot, RobotStatus.STOP)
-        for coords in robot.read_and_clear_obstacles():
+        obstacles = robot.read_and_clear_obstacles()
+        humans = robot.read_and_clear_humans()
+        for coords in obstacles:
             self._set_map_field(coords, MapObject.OBSTACLE)
-        for coords in robot.read_and_clear_humans():
+        for coords in humans:
             self._set_map_field(coords, MapObject.HUMAN)
+        self._map_graph.remove_nodes_from(humans)
+        self._map_graph.remove_nodes_from(obstacles)
         # z, x, y = robot.get_position()
         # self._map[z, x, y] = MapObject.OBSTACLE
 
@@ -151,32 +184,7 @@ class MainDriver(object):
         return self._map
 
     def _graph_connection(self, start_pos, dest_pos):
-        G = nx.Graph()
-        available_map_objects = [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED]
-        for z, floor in enumerate(self._map):
-            for x, row in enumerate(floor):
-                for y, col in enumerate(row):
-                    if start_pos == (z, x, y):
-                        print("jksdla")
-                    if self._map[z, x, y] in available_map_objects or \
-                            (isinstance(self._map[z, x, y], numbers.Number) and self._map[z, x, y] > 0):
-                        # == MapObject.EMPTY or self._map[z, x, y] == MapObject.STEPS or:
-                        G.add_node((z, x, y))
-        for (z, x, y), _ in G.nodes.items():
-            if G.has_node((z, x + 1, y)):
-                G.add_edge((z, x, y), (z, x + 1, y))
-            if G.has_node((z, x - 1, y)):
-                G.add_edge((z, x, y), (z, x - 1, y))
-            if G.has_node((z, x, y + 1)):
-                G.add_edge((z, x, y), (z, x, y + 1))
-            if G.has_node((z, x, y - 1)):
-                G.add_edge((z, x, y), (z, x, y - 1))
-            if self._map[z, x, y] == MapObject.STEPS:
-                if G.has_node((z + 1, x, y)) and self._map[z + 1, x, y] == MapObject.STEPS:
-                    G.add_edge((z, x, y), (z + 1, x, y))
-                if G.has_node((z - 1, x, y)) and self._map[z - 1, x, y] == MapObject.STEPS:
-                    G.add_edge((z, x, y), (z - 1, x, y))
-        return nx.dijkstra_path(G, start_pos, dest_pos)
+        return nx.dijkstra_path(self._map_graph, start_pos, dest_pos)
 
     def _flood_fill(self, start_pos, robot_area):
         tmp_map = np.copy(self._map)
@@ -337,9 +345,9 @@ class MainDriver(object):
             self._robot_notify_arrived_callback(robot)
         elif robot_notification == RobotNotification.FOUND_OBSTACLE:
             self._robot_notify_found_obstacle_callback(robot)
-            # self.plan_paths()
+            self.plan_paths()
             # self.plan_random_paths()
-            # self.send_paths_to_robots()
+            self.send_paths_to_robots()
         elif robot_notification == RobotNotification.FOUND_HUMAN:
             self._robot_notify_found_human_callback(robot)
             # self.plan_paths()
