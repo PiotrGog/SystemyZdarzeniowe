@@ -298,6 +298,49 @@ class MainDriver(object):
         self._paths[id] = result_path
         return self._paths[id]
 
+    def again_plan_path(self, **kwargs):
+        robot = kwargs['robot']
+        id = robot.get_id()
+        current_robot_step, current_robot_status = self._robots_status[id]
+        robot_coords_list = self._paths[id]  # get robot path list
+        robot_position_plan_path = robot_coords_list[current_robot_step]  # get current robot position
+        init_rp = robot_position_plan_path
+
+        if current_robot_status == RobotStatus.STOP:
+            self._paths[id] = [robot_position_plan_path]  # reset path list
+            path = [robot_position_plan_path]
+            self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
+        # else:
+        #     self._robots_status[id] = (1, RobotStatus.RUN)
+        #     self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
+        #     path = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
+
+        result_path = []
+
+        left_steps = robot_coords_list[current_robot_step:]
+        for i, (z, x, y) in enumerate(left_steps):
+            if self._map[z, x, y] == MapObject.EMPTY:
+                path.append((z, x, y))
+                # robot_position_plan_path = (z, x, y)
+
+        for i in range(len(path) - 1):
+            if abs(robot_position_plan_path[1] - path[i + 1][1]) + \
+                    abs(robot_position_plan_path[2] - path[i + 1][2]) > 1:
+                try:
+                    connect_path = self._graph_connection(path[i], path[i + 1])
+                    result_path = result_path + connect_path
+                except nx.NetworkXNoPath:
+                    pass
+            else:
+                result_path.append(path[i + 1])
+            robot_position_plan_path = result_path[-1]
+        self._paths[id] = result_path
+        return self._paths[id]
+
+    def again_plan_paths(self, **kwargs):
+        for robot in self._robots:
+            self.again_plan_path(robot=robot)
+
     def plan_paths(self, **kwargs):
         for robot in self._robots:
             self.plan_path(robot=robot)
@@ -345,7 +388,7 @@ class MainDriver(object):
             self._robot_notify_arrived_callback(robot)
         elif robot_notification == RobotNotification.FOUND_OBSTACLE:
             self._robot_notify_found_obstacle_callback(robot)
-            self.plan_paths()
+            self.again_plan_paths()
             # self.plan_random_paths()
             self.send_paths_to_robots()
         elif robot_notification == RobotNotification.FOUND_HUMAN:

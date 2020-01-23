@@ -12,7 +12,7 @@ class Color:
 
 def random_color_generator():
     # RGB color
-    return Color((random.randint(1, 254), random.randint(1, 254), random.randint(1, 254)))
+    return Color((random.randint(1, 254), random.randint(200, 254), random.randint(1, 254)))
 
 
 class Colors(Enum):
