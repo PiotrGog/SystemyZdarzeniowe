@@ -7,4 +7,4 @@ raporty/*.log
 raporty/*.tox
 raporty/*.aux
 __pycache__/
-
+app/*.log

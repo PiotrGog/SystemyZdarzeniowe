@@ -97,10 +97,10 @@ class RobotDriver(object):
                         self._obstacles.append((floor, new_x, new_y))
                         self._map[floor, new_x, new_y] = MapObject.EMPTY
 
-        print(self._notification)
-        print(self.get_position())
-        print(self._obstacles)
-        print(self._humans)
+        # print(self._notification)
+        # print(self.get_position())
+        # print(self._obstacles)
+        # print(self._humans)
 
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
         robot_state = self.get_status()[1]
@@ -119,8 +119,8 @@ class RobotDriver(object):
             if self._notification == RobotNotification.NONE and self.get_status()[0] < len(self._path) - 1:
                 self._notification = RobotNotification.WANT_RUN
                 self._movement_iterations = 1  # random.randint(5, 10)
-            else:
-                print("kjfld;sa")
+            # else:
+            #     print("kjfld;sa")
 
         # if self._status[0] == len(self._path) - 1:
         #     self._notification = RobotNotification.ARRIVED

@@ -8,19 +8,22 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from src.consts import MapObject
+import logging
 
 
 def main():
+    logging.basicConfig(filename='app.log', filemode='w', level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
     draw_pause_time_ms = 1
-    m_map = temporary_map.temporary_map_1_floors_rooms
+    m_map = temporary_map.temporary_map_2_floors
     m_real_map = random_obstacles_generator.random_obstacles_generator(
-        empty_map=temporary_map.temporary_map_1_floors_rooms,
+        empty_map=temporary_map.temporary_map_2_floors,
         obstacle_prob=0.1,
         human_prob=0.00)
-    print(m_map.shape)
+    # print(m_map.shape)
     m_robots = []
-    m_robots.append(robot_driver.RobotDriver(1, m_real_map))  # , initial_localization=(0, 38, 2)))
-    # m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
+    m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
+    m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
     # m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
     # m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
@@ -29,11 +32,12 @@ def main():
         m_driver.plan_path(robot=robot)
     m_driver.send_paths_to_robots()
     m_gui = gui.MapGui()
-    print(m_driver)
+    # print(m_driver)
+    logging.info('Starting main loop')
     while True:
         for robot in m_robots:
             robot.run()
-            print(robot.get_position(), robot.get_status())
+            # print(robot.get_position(), robot.get_status())
             m_driver.handle_robot_notify(robot=robot)
         m_gui.update(m_driver.get_map())
         m_gui.draw(draw_pause_time_ms)
