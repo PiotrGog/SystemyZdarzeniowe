@@ -78,16 +78,17 @@ class MainDriver(object):
 
     def _robot_notify_arrived_callback(self, robot):
         logging.info(f'_robot_notify_arrived_callback, robot {robot.get_id()}')
-        # logging.info('Starting main loop')
         self._set_robot_status(robot, RobotStatus.STOP)
         robot_step = self._get_robot_step(robot)
         if robot_step <= 0:
             return
         prev_coords = self._get_robot_coordinates(robot, -1)
-        if type(self._get_map_field(prev_coords)) != MapObject:
+        pz, px, py = prev_coords
+        if type(self._get_map_field(prev_coords)) != MapObject \
+                and self._empty_map[pz, px, py] == MapObject.EMPTY:
             self._set_map_field(prev_coords, MapObject.VISITED)
         else:
-            print("jfdskljfsla")
+            self._set_map_field(prev_coords, self._empty_map[pz, px, py])
         floor, x, y = prev_coords
         floors, x_max, y_max = self._map.shape
         for x_i in range(3):
@@ -102,7 +103,6 @@ class MainDriver(object):
 
     def _robot_notify_found_human_callback(self, robot):
         logging.info(f'_robot_notify_found_human_callback, robot {robot.get_id()}')
-        # self._set_map_field(robot.get_position(), MapObject.HUMAN)
         self._set_robot_status(robot, RobotStatus.STOP)
         obstacles = robot.read_and_clear_obstacles()
         humans = robot.read_and_clear_humans()
@@ -112,12 +112,9 @@ class MainDriver(object):
             self._set_map_field(coords, MapObject.HUMAN)
         self._map_graph.remove_nodes_from(humans)
         self._map_graph.remove_nodes_from(obstacles)
-        # z, x, y = robot.get_position()
-        # self._map[z, x, y] = MapObject.HUMAN
 
     def _robot_notify_found_obstacle_callback(self, robot):
         logging.info(f'_robot_notify_found_obstacle_callback, robot {robot.get_id()}')
-        # self._set_map_field(robot.get_position(), MapObject.OBSTACLE)
         self._set_robot_status(robot, RobotStatus.STOP)
         obstacles = robot.read_and_clear_obstacles()
         humans = robot.read_and_clear_humans()
@@ -260,9 +257,8 @@ class MainDriver(object):
                             result[z, x + 1, y + 1] = MapObject.WALL
                         if np.all(result[z, x:x + 3, y:y + 2] == mask4):
                             result[z, x + 1, y] = MapObject.WALL
-
         empty = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(result == MapObject.EMPTY)])
-        diff_walls = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(map == MapObject.EMPTY)]) - empty
+        diff_walls = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(self._map == MapObject.EMPTY)]) - empty
         closed = []
         while len(empty) > 0:
             new_element = empty.pop()
@@ -301,7 +297,7 @@ class MainDriver(object):
         for area_idx, area in enumerate(robot_areas):
             path_to_area = self._graph_connection(robot_position_plan_path, area[0])
             area_init_position = next(x for x in path_to_area if x in set(area))
-            path_to_area = path_to_area[:path_to_area.index((area_init_position))]
+            path_to_area = path_to_area[:path_to_area.index(area_init_position)]
             result_path = result_path + path_to_area
             robot_position_plan_path = area_init_position
             path, _ = self._flood_fill(robot_position_plan_path, area)
@@ -312,7 +308,11 @@ class MainDriver(object):
                 else:
                     result_path.append(path[i])
             robot_position_plan_path = result_path[-1]
-        return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
+        try:
+            return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
+        except nx.NetworkXNoPath:
+            logging.error('Cannot find return path')
+            return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
         return self._paths[id]
@@ -334,7 +334,7 @@ class MainDriver(object):
             # self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
             path = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
 
-        result_path = []
+        result_path = [robot_position_plan_path]
 
         left_steps = robot_coords_list[current_robot_step:]
         for i, (z, x, y) in enumerate(left_steps):
@@ -343,7 +343,8 @@ class MainDriver(object):
                 # robot_position_plan_path = (z, x, y)
 
         for i in range(len(path)):
-            if abs(robot_position_plan_path[1] - path[i][1]) + \
+            if abs(robot_position_plan_path[0] - path[i][0]) + \
+                    abs(robot_position_plan_path[1] - path[i][1]) + \
                     abs(robot_position_plan_path[2] - path[i][2]) > 1:
                 try:
                     connect_path = self._graph_connection(robot_position_plan_path,
@@ -356,7 +357,11 @@ class MainDriver(object):
             else:
                 result_path.append(path[i])
             robot_position_plan_path = result_path[-1]
-        return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
+        try:
+            return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
+        except nx.NetworkXNoPath:
+            logging.error('Cannot find return path')
+            return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
         logging.info(f'{init_rp}, {self._paths[id][0]}')
@@ -414,13 +419,11 @@ class MainDriver(object):
         elif robot_notification == RobotNotification.FOUND_OBSTACLE:
             self._robot_notify_found_obstacle_callback(robot)
             self.again_plan_paths()
-            # self.plan_random_paths()
             self.send_paths_to_robots()
         elif robot_notification == RobotNotification.FOUND_HUMAN:
             self._robot_notify_found_human_callback(robot)
-            # self.plan_paths()
-            # self.plan_random_paths()
-            # self.send_paths_to_robots()
+            self.again_plan_paths()
+            self.send_paths_to_robots()
         else:
             raise Exception("Illegal notification")
         # robot.reset_notify()

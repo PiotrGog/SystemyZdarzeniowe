@@ -24,8 +24,8 @@ def main():
     m_robots = []
     m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
     m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
-    # m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
-    # m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
+    m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
+    m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
         # m_driver.plan_random_path(robot=robot, length=1000)
@@ -37,7 +37,7 @@ def main():
     while True:
         for robot in m_robots:
             robot.run()
-            # print(robot.get_position(), robot.get_status())
+            logging.info(f'{robot.get_id()}, {robot.get_position()}, {robot.get_status()}')
             m_driver.handle_robot_notify(robot=robot)
         m_gui.update(m_driver.get_map())
         m_gui.draw(draw_pause_time_ms)
