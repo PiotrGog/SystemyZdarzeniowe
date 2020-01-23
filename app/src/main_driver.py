@@ -69,6 +69,13 @@ class MainDriver(object):
         logging.info(f'_robot_notify_none_callback, robot {robot.get_id()}')
         pass
 
+    def _clear_path(self, path):
+        result_path = [path[0]]
+        for p in path:
+            if p != result_path[-1]:
+                result_path.append(p)
+        return result_path
+
     def _robot_notify_arrived_callback(self, robot):
         logging.info(f'_robot_notify_arrived_callback, robot {robot.get_id()}')
         # logging.info('Starting main loop')
@@ -307,7 +314,7 @@ class MainDriver(object):
             robot_position_plan_path = result_path[-1]
         return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
         result_path = result_path + return_path
-        self._paths[id] = result_path
+        self._paths[id] = self._clear_path(result_path)
         return self._paths[id]
 
     def again_plan_path(self, **kwargs):
@@ -351,7 +358,7 @@ class MainDriver(object):
             robot_position_plan_path = result_path[-1]
         return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
         result_path = result_path + return_path
-        self._paths[id] = result_path
+        self._paths[id] = self._clear_path(result_path)
         logging.info(f'{init_rp}, {self._paths[id][0]}')
         return self._paths[id]
 
