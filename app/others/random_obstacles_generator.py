@@ -5,14 +5,23 @@ import numpy as np
 import src.temporary_map as tmp_map
 
 
-def random_obstacles_generator(empty_map, obstacle_prob, human_prob):
+def random_obstacles_generator(empty_map, obstacle_prob, human_prob, avoid_areas=None):
+    if avoid_areas is None:
+        avoid_areas = set()
+    tmp_avoid_areas = set()
+    for i in avoid_areas:
+        z, x, y = i
+        for xi in range(-1, 2):
+            for yi in range(-1, 2):
+                tmp_avoid_areas.add((z, x + xi, y + yi))
+    avoid_areas = tmp_avoid_areas
     result_map = np.zeros_like(empty_map)
     for f, floor in enumerate(empty_map):
         for r, row in enumerate(floor):
             for c, col in enumerate(row):
                 prob = random()
                 if empty_map[f, r, c] == MapObject.EMPTY and \
-                        (prob < obstacle_prob or prob < human_prob):
+                        (prob < obstacle_prob or prob < human_prob) and not (f, r, c) in avoid_areas:
                     if obstacle_prob < human_prob:
                         if prob < obstacle_prob:
                             result_map[f, r, c] = MapObject.OBSTACLE

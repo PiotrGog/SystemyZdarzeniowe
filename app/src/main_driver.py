@@ -33,14 +33,16 @@ class MainDriver(object):
         self._init_areas()
         self._map_graph = nx.Graph()
         self._init_graph()
+        for robot in self._robots:
+            self._set_map_field(robot._initial_localization, robot.get_id())
 
     def _init_areas(self):
         map_closed_areas, closed_areas = self._close_areas()
         sorted_closed_areas = sorted(closed_areas, key=lambda x: len(x))
         robots_amount = len(self._robots)
-        if len(sorted_closed_areas) >= robots_amount:
-            for i, area in enumerate(sorted_closed_areas):
-                self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
+        # if len(sorted_closed_areas) >= robots_amount:
+        for i, area in enumerate(sorted_closed_areas):
+            self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
 
     def _init_graph(self):
         available_map_objects = [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED]

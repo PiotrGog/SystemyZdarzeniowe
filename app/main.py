@@ -19,13 +19,15 @@ def main():
     m_real_map = random_obstacles_generator.random_obstacles_generator(
         empty_map=temporary_map.temporary_map_2_floors,
         obstacle_prob=0.1,
-        human_prob=0.00)
+        human_prob=0.00,
+        avoid_areas={(0, 38, 2), (0, 38, 3), (0, 38, 4), (0, 38, 5), (0, 38, 6)})
     # print(m_map.shape)
     m_robots = []
     m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
     m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
     m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
     m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
+    m_robots.append(robot_driver.RobotDriver(5, m_real_map, initial_localization=(0, 38, 6)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
         # m_driver.plan_random_path(robot=robot, length=1000)
