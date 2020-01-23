@@ -18,10 +18,9 @@ def main():
     m_map = temporary_map.temporary_map_2_floors
     m_real_map = random_obstacles_generator.random_obstacles_generator(
         empty_map=temporary_map.temporary_map_2_floors,
-        obstacle_prob=0.1,
-        human_prob=0.00,
+        obstacle_prob=0.05,
+        human_prob=0.01,
         avoid_areas={(0, 38, 2), (0, 38, 3), (0, 38, 4), (0, 38, 5), (0, 38, 6)})
-    # print(m_map.shape)
     m_robots = []
     m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
     m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
@@ -30,11 +29,9 @@ def main():
     m_robots.append(robot_driver.RobotDriver(5, m_real_map, initial_localization=(0, 38, 6)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
-        # m_driver.plan_random_path(robot=robot, length=1000)
         m_driver.plan_path(robot=robot)
     m_driver.send_paths_to_robots()
     m_gui = gui.MapGui()
-    # print(m_driver)
     logging.info('Starting main loop')
     while True:
         for robot in m_robots:
@@ -79,7 +76,6 @@ def close_rooms(map):
 
     empty = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(result == consts.MapObject.EMPTY)])
     diff_walls = set([tuple(x.reshape(1, -1)[0]) for x in np.argwhere(map == consts.MapObject.EMPTY)]) - empty
-    # visited = set()
     closed = []
     while len(empty) > 0:
         new_element = empty.pop()
@@ -227,10 +223,6 @@ def flood_fill_demo():
     plt.show()
     plt.imshow(tmp[1].astype(np.float))
     plt.show()
-
-
-def find_path(map, start, dest):
-    pass
 
 
 if __name__ == '__main__':

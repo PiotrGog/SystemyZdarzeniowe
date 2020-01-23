@@ -5,13 +5,10 @@ from .consts import (
 )
 import logging
 
-# from src import robot_driver
-
 import numpy as np
 import random
 import networkx as nx
 import numbers
-import inspect
 
 
 class MainDriver(object):
@@ -40,7 +37,6 @@ class MainDriver(object):
         map_closed_areas, closed_areas = self._close_areas()
         sorted_closed_areas = sorted(closed_areas, key=lambda x: len(x))
         robots_amount = len(self._robots)
-        # if len(sorted_closed_areas) >= robots_amount:
         for i, area in enumerate(sorted_closed_areas):
             self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
 
@@ -128,8 +124,6 @@ class MainDriver(object):
             self._set_map_field(coords, MapObject.HUMAN)
         self._map_graph.remove_nodes_from(humans)
         self._map_graph.remove_nodes_from(obstacles)
-        # z, x, y = robot.get_position()
-        # self._map[z, x, y] = MapObject.OBSTACLE
 
     def _robot_notify_want_run_callback(self, robot):
         logging.info(f'_robot_notify_want_run_callback, robot {robot.get_id()}')
@@ -293,7 +287,6 @@ class MainDriver(object):
         else:
             self._robots_status[id] = (1, RobotStatus.RUN)
             self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
-        # path, _ = self._flood_fill(robot_position_plan_path)
 
         result_path = []
         for area_idx, area in enumerate(robot_areas):
@@ -328,12 +321,10 @@ class MainDriver(object):
         init_rp = robot_position_plan_path
 
         if current_robot_status == RobotStatus.STOP:
-            # self._paths[id] = [robot_position_plan_path]  # reset path list
             path = [robot_position_plan_path]
             self._robots_status[id] = (0, RobotStatus.STOP)  # reset steps counter
         else:
             self._robots_status[id] = (1, RobotStatus.RUN)
-            # self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
             path = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
 
         result_path = [robot_position_plan_path]
@@ -428,4 +419,3 @@ class MainDriver(object):
             self.send_paths_to_robots()
         else:
             raise Exception("Illegal notification")
-        # robot.reset_notify()

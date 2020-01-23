@@ -6,7 +6,6 @@ from .consts import (
 
 import numpy as np
 import random
-import time
 
 
 class RobotDriver(object):
@@ -97,11 +96,6 @@ class RobotDriver(object):
                         self._obstacles.append((floor, new_x, new_y))
                         self._map[floor, new_x, new_y] = MapObject.EMPTY
 
-        # print(self._notification)
-        # print(self.get_position())
-        # print(self._obstacles)
-        # print(self._humans)
-
     def run(self):  # przesuniecie robota po udzieleniu zgody na jazde gdy nie ma przeszkody
         robot_state = self.get_status()[1]
         if robot_state == RobotStatus.RUN:  # while still not arrived
@@ -119,17 +113,3 @@ class RobotDriver(object):
             if self._notification == RobotNotification.NONE and self.get_status()[0] < len(self._path) - 1:
                 self._notification = RobotNotification.WANT_RUN
                 self._movement_iterations = 1  # random.randint(5, 10)
-            # else:
-            #     print("kjfld;sa")
-
-        # if self._status[0] == len(self._path) - 1:
-        #     self._notification = RobotNotification.ARRIVED
-        #     return
-        # self._notification = RobotNotification.WANT_RUN
-        # if self._status[1] == RobotStatus.RUN:
-        #     # time_rand = random.random() * 5
-        #     # time.sleep(time_rand)
-        #     self.detect_obstacle()
-        #     if self._notification != RobotNotification.FOUND_OBSTACLE:
-        #         self._status = (self._status[0] + 1, RobotStatus.STOP)
-        #         self._notification = RobotNotification.ARRIVED
