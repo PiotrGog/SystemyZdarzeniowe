@@ -25,7 +25,7 @@ class MainDriver(object):
             RobotNotification.FOUND_OBSTACLE: self._robot_notify_found_obstacle_callback,
             RobotNotification.WANT_RUN: self._robot_notify_want_run_callback,
         }
-
+        self._robot_return_step = {r.get_id(): None for r in robots}
         self._robot_area = {r.get_id(): [] for r in robots}
         self._init_areas()
         self._map_graph = nx.Graph()
@@ -74,10 +74,40 @@ class MainDriver(object):
                 result_path.append(p)
         return result_path
 
+    def _group_empty(self, empty):
+        result = []
+
+        def _group_empty_helper(position, area):
+            z, x, y = position
+            if not position in empty:
+                return
+            empty.discard(position)
+            area.append((z, x, y))
+            _group_empty_helper((z, x + 1, y), area)
+            _group_empty_helper((z, x - 1, y), area)
+            _group_empty_helper((z, x, y + 1), area)
+            _group_empty_helper((z, x, y - 1), area)
+
+        while len(empty) > 0:
+            result.append([])
+            _group_empty_helper(empty.pop(), result[-1])
+        return result
+
+    def _find_closest_not_explored(self, robot):
+        empty_places = set([(int(x[0]), int(x[1]), int(x[2])) for x in np.argwhere(self._map == MapObject.EMPTY)])
+
+        ar = self._group_empty(empty_places)
+        for id, areas in self._robot_area.items():
+            for area in areas:
+                pass
+
     def _robot_notify_arrived_callback(self, robot):
         logging.info(f'_robot_notify_arrived_callback, robot {robot.get_id()}')
         self._set_robot_status(robot, RobotStatus.STOP)
         robot_step = self._get_robot_step(robot)
+        if robot_step == self._robot_return_step[robot.get_id()]:
+            print("fkldajfklsaj")
+            self._find_closest_not_explored(robot=robot)
         if robot_step <= 0:
             return
         prev_coords = self._get_robot_coordinates(robot, -1)
@@ -310,6 +340,7 @@ class MainDriver(object):
             return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
+        self._robot_return_step[id] = len(self._paths[id]) - len(return_path)
         return self._paths[id]
 
     def again_plan_path(self, **kwargs):
@@ -357,6 +388,7 @@ class MainDriver(object):
             return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
+        self._robot_return_step[id] = len(self._paths[id]) - len(return_path)
         logging.info(f'{init_rp}, {self._paths[id][0]}')
         return self._paths[id]
 
