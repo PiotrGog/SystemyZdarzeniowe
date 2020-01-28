@@ -9,6 +9,39 @@ import numpy as np
 import random
 import networkx as nx
 import numbers
+from operator import itemgetter
+from itertools import chain
+
+
+def banker(processes, available, occupied, max_depth):
+    steps = []
+    needed_resources = []
+    for process in processes:
+        needed_resources.append([])
+        for i in range(max_depth):
+            if i < len(process):
+                needed_resources[-1].append(process[i])
+            else:
+                needed_resources[-1].append(process[-1])
+    finished = np.full(len(processes), False, dtype=bool)
+    current_position = np.zeros(len(processes), dtype=int)
+    moved = True
+    while moved:
+        moved = False
+        for finished_idx in range(len(finished)):
+            if not finished[finished_idx]:
+                for resource_idx, resource in enumerate(
+                        needed_resources[finished_idx][current_position[finished_idx]:]):
+                    others_proc_resources = needed_resources[:finished_idx] + needed_resources[finished_idx + 1:]
+                    if resource not in list(chain.from_iterable(others_proc_resources)):
+                        result = all(elem in available for elem in
+                                     needed_resources[finished_idx][current_position[finished_idx]:resource_idx + 1])
+                        if result:
+                            moved = True
+                            current_position[finished_idx] = resource_idx + 1
+                            if current_position[finished_idx] == max_depth:
+                                finished[finished_idx] = True
+    return np.all(finished), steps
 
 
 class MainDriver(object):
@@ -25,7 +58,7 @@ class MainDriver(object):
             RobotNotification.FOUND_OBSTACLE: self._robot_notify_found_obstacle_callback,
             RobotNotification.WANT_RUN: self._robot_notify_want_run_callback,
         }
-
+        self._robot_return_step = {r.get_id(): None for r in robots}
         self._robot_area = {r.get_id(): [] for r in robots}
         self._init_areas()
         self._map_graph = nx.Graph()
@@ -74,12 +107,87 @@ class MainDriver(object):
                 result_path.append(p)
         return result_path
 
+    def _group_empty(self, empty):
+        result = []
+
+        def _group_empty_helper(position, area):
+            z, x, y = position
+            if position not in empty:
+                return
+            empty.discard(position)
+            area.append((z, x, y))
+            _group_empty_helper((z, x + 1, y), area)
+            _group_empty_helper((z, x - 1, y), area)
+            _group_empty_helper((z, x, y + 1), area)
+            _group_empty_helper((z, x, y - 1), area)
+
+        while len(empty) > 0:
+            result.append([])
+            _group_empty_helper(empty.pop(), result[-1])
+        return result
+
+    def _find_closest_not_explored(self, robot):
+        source = self._get_robot_coordinates(robot)
+        robots_left_max = float(0)
+        for r in self._robots:
+            robots_left_max = max(robots_left_max, self._robot_return_step[r.get_id()] - self._get_robot_step(r))
+        paths = nx.single_source_dijkstra(self._map_graph, source, cutoff=robots_left_max)
+        paths_length = []
+        for k, v in paths[0].items():
+            paths_length.append((v, paths[1][k]))
+        not_visited = list(
+            filter(lambda x: self._get_map_field(x[1][-1]) == MapObject.EMPTY and x[0] > 0, paths_length))
+        paths_length = sorted(not_visited, key=itemgetter(0))
+        return paths_length
+
+    def _divide_area_again_plan(self, robot, closest_not_explored):
+        if len(closest_not_explored) == 0:
+            return
+        robot_area = []
+        robot_id = -1
+        for id, areas in self._robot_area.items():
+            for area in areas:
+                if closest_not_explored[0][1][-1] in area:
+                    robot_area = area
+                    robot_id = id
+                    break
+        import matplotlib.pyplot as plt
+        path, tmp_map = self._flood_fill(closest_not_explored[0][1][-1], robot_area)
+        tmp_map[tmp_map == MapObject.EMPTY] = -10
+        tmp_map[tmp_map == MapObject.WALL] = -20
+        tmp_map[tmp_map == MapObject.VISITED] = -5
+        tmp_map[tmp_map == MapObject.OBSTACLE] = -20
+        tmp_map[tmp_map == MapObject.HUMAN] = -20
+        tmp_map[tmp_map == MapObject.STEPS] = -1
+        # plt.imshow(tmp_map[0].astype(np.float))
+        # plt.show()
+        # plt.imshow(tmp_map[1].astype(np.float))
+        # plt.show()
+        if len(path) > 2:
+            self._robots_status[robot.get_id()] = (0, RobotStatus.STOP)
+            self._paths[robot.get_id()] = closest_not_explored[0][1].copy()
+            self._robot_area[robot.get_id()].append([])
+            for i in range(len(path) // 2 + 1):
+                self._paths[robot_id].remove(path[i])
+                robot_area.remove(path[i])
+                self._paths[robot.get_id()].append(path[i])
+                self._robot_area[robot.get_id()][-1].append(path[i])
+            self._robot_return_step[robot.get_id()] = len(self._paths[robot.get_id()])
+            self.again_plan_path(robot=robot)
+            robot.set_path(self._paths[robot.get_id()])
+            robot.set_step(self._robots_status[robot.get_id()][0])
+            other_robot = list(filter(lambda x: x.get_id() == robot_id, self._robots))[0]
+
+            self.again_plan_path(robot=other_robot)
+            other_robot.set_path(self._paths[other_robot.get_id()])
+            other_robot.set_step(self._robots_status[other_robot.get_id()][0])
+
     def _robot_notify_arrived_callback(self, robot):
         logging.info(f'_robot_notify_arrived_callback, robot {robot.get_id()}')
         self._set_robot_status(robot, RobotStatus.STOP)
         robot_step = self._get_robot_step(robot)
-        if robot_step <= 0:
-            return
+        # if robot_step <= 0:
+        #     return
         prev_coords = self._get_robot_coordinates(robot, -1)
         pz, px, py = prev_coords
         if type(self._get_map_field(prev_coords)) != MapObject \
@@ -98,6 +206,9 @@ class MainDriver(object):
                         self._map[floor, new_x, new_y] = MapObject.VISITED
         curr_coords = self._get_robot_coordinates(robot)
         self._set_map_field(curr_coords, robot.get_id())
+        if robot_step == self._robot_return_step[robot.get_id()]:
+            closest_not_explored = self._find_closest_not_explored(robot=robot)
+            self._divide_area_again_plan(robot, closest_not_explored)
 
     def _robot_notify_found_human_callback(self, robot):
         logging.info(f'_robot_notify_found_human_callback, robot {robot.get_id()}')
@@ -126,10 +237,75 @@ class MainDriver(object):
         self._map_graph.remove_nodes_from(obstacles)
 
     def _robot_notify_want_run_callback(self, robot):
+        def _find_non_blocking_config(path_1, path_2):
+            path1 = []
+            path2 = []
+            if len(path_1) > 1 and len(path_2) > 1:
+                if path_1[0] == path_2[1] and path_1[1] == path_2[0]:
+                    current_pos = path_1[0]
+                    i = 1
+                    while i < len(path_2) and current_pos == path_2[i]:
+                        z, x, y = current_pos
+                        available = [(z, x + 1, y), (z, x - 1, y), (z, x, y + 1), (z, x, y - 1)]
+                        for cord in available:
+                            if self._get_map_field(cord) in [MapObject.VISITED, MapObject.STEPS, MapObject.EMPTY]:
+                                current_pos = cord
+                                path1.append(cord)
+                                break
+                        i += 1
+            else:
+                if len(path_1) == 1:
+                    current_pos = path_1[0]
+                    i = 1
+                    while i < len(path_2) and current_pos == path_2[i]:
+                        z, x, y = current_pos
+                        available = [(z, x + 1, y), (z, x - 1, y), (z, x, y + 1), (z, x, y - 1)]
+                        for cord in available:
+                            if self._get_map_field(cord) in [MapObject.VISITED, MapObject.STEPS, MapObject.EMPTY]:
+                                current_pos = cord
+                                path1.append(cord)
+                                break
+                        i += 1
+                elif len(path_2) == 1:
+                    current_pos = path_2[0]
+                    i = 1
+                    while i < len(path_1) and current_pos == path_1[i]:
+                        z, x, y = current_pos
+                        available = [(z, x + 1, y), (z, x - 1, y), (z, x, y + 1), (z, x, y - 1)]
+                        for cord in available:
+                            if self._get_map_field(cord) in [MapObject.VISITED, MapObject.STEPS, MapObject.EMPTY]:
+                                current_pos = cord
+                                path2.append(cord)
+                                break
+                        i += 1
+            print(path1, path2)
+            return path1, path2
+
         logging.info(f'_robot_notify_want_run_callback, robot {robot.get_id()}')
         next_coordinates = self._get_robot_coordinates(robot, 1)
         next_coordinates_state = self._get_map_field(next_coordinates)
         if type(next_coordinates_state) != MapObject:
+            opposite_robot_id = next_coordinates_state
+            opposite_robot_path = self._paths[opposite_robot_id]
+            opposite_robot_status = self._robots_status[opposite_robot_id]
+            path1, path2 = _find_non_blocking_config(
+                self._paths[robot.get_id()][self._robots_status[robot.get_id()][0]:],
+                opposite_robot_path[opposite_robot_status[0]:])
+
+            path1 = path1 + list(reversed(path1[:-1]))
+            path2 = path2 + list(reversed(path2[:-1]))
+
+            self._paths[robot.get_id()] = \
+                self._paths[robot.get_id()][:self._robots_status[robot.get_id()][0] + 1] + \
+                path1 + self._paths[robot.get_id()][self._robots_status[robot.get_id()][0] + 1:]
+            self._robot_return_step[robot.get_id()] += len(path1)
+            robot.set_path(self._paths[robot.get_id()])
+
+            self._paths[opposite_robot_id] = opposite_robot_path[:opposite_robot_status[0] + 1] + \
+                                             path2 + opposite_robot_path[opposite_robot_status[0] + 1:]
+            self._robot_return_step[opposite_robot_id] += len(path2)
+            list(filter(lambda x: x.get_id() == opposite_robot_id, self._robots))[0].set_path(
+                self._paths[opposite_robot_id])
             return
         self._set_map_field(next_coordinates, robot.get_id())
         self._set_robot_status(robot, RobotStatus.RUN)
@@ -310,6 +486,8 @@ class MainDriver(object):
             return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
+        self._robot_return_step[id] = len(self._paths[id]) - len(return_path)
+        # print(self._robot_return_step[id])
         return self._paths[id]
 
     def again_plan_path(self, **kwargs):
@@ -329,7 +507,7 @@ class MainDriver(object):
 
         result_path = [robot_position_plan_path]
 
-        left_steps = robot_coords_list[current_robot_step:]
+        left_steps = robot_coords_list[current_robot_step:self._robot_return_step[id] + 1]
         for i, (z, x, y) in enumerate(left_steps):
             if self._map[z, x, y] == MapObject.EMPTY:
                 path.append((z, x, y))
@@ -357,6 +535,8 @@ class MainDriver(object):
             return_path = []
         result_path = result_path + return_path
         self._paths[id] = self._clear_path(result_path)
+        self._robot_return_step[id] = len(self._paths[id]) - len(return_path)
+        # print(self._robot_return_step[id])
         logging.info(f'{init_rp}, {self._paths[id][0]}')
         return self._paths[id]
 
