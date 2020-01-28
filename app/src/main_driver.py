@@ -10,6 +10,38 @@ import random
 import networkx as nx
 import numbers
 from operator import itemgetter
+from itertools import chain
+
+
+def banker(processes, available, occupied, max_depth):
+    steps = []
+    needed_resources = []
+    for process in processes:
+        needed_resources.append([])
+        for i in range(max_depth):
+            if i < len(process):
+                needed_resources[-1].append(process[i])
+            else:
+                needed_resources[-1].append(process[-1])
+    finished = np.full(len(processes), False, dtype=bool)
+    current_position = np.zeros(len(processes), dtype=int)
+    moved = True
+    while moved:
+        moved = False
+        for finished_idx in range(len(finished)):
+            if not finished[finished_idx]:
+                for resource_idx, resource in enumerate(
+                        needed_resources[finished_idx][current_position[finished_idx]:]):
+                    others_proc_resources = needed_resources[:finished_idx] + needed_resources[finished_idx + 1:]
+                    if resource not in list(chain.from_iterable(others_proc_resources)):
+                        result = all(elem in available for elem in
+                                     needed_resources[finished_idx][current_position[finished_idx]:resource_idx + 1])
+                        if result:
+                            moved = True
+                            current_position[finished_idx] = resource_idx + 1
+                            if current_position[finished_idx] == max_depth:
+                                finished[finished_idx] = True
+    return np.all(finished), steps
 
 
 class MainDriver(object):

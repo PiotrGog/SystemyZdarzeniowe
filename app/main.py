@@ -25,7 +25,7 @@ def main():
     m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
     m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
     m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
-    # m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
+    m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
     # m_robots.append(robot_driver.RobotDriver(5, m_real_map, initial_localization=(0, 38, 6)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
@@ -34,6 +34,12 @@ def main():
     m_gui = gui.MapGui()
     logging.info('Starting main loop')
     while True:
+        # safe, steps = main_driver.banker(list(map(lambda x: x._path[x._status[0]:], m_robots)),
+        #                                  np.argwhere(m_driver._map == np.any(
+        #                                      [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED])),
+        #                                  [x._path[x._status[0]] for x in m_robots],
+        #                                  10)
+        # print(safe)
         for robot in m_robots:
             robot.run()
             logging.info(f'{robot.get_id()}, {robot.get_position()}, {robot.get_status()}')
