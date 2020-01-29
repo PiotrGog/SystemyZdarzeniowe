@@ -9,23 +9,28 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from src.consts import MapObject
 import logging
+import pickle as pkl
 
 
 def main():
     logging.basicConfig(filename='app.log', filemode='w', level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
     draw_pause_time_ms = 1
-    m_map = temporary_map.temporary_map_2_floors
-    m_real_map = random_obstacles_generator.random_obstacles_generator(
-        empty_map=temporary_map.temporary_map_2_floors,
-        obstacle_prob=0.05,
-        human_prob=0.01,
-        avoid_areas={(0, 38, 2), (0, 38, 3), (0, 38, 4), (0, 38, 5), (0, 38, 6)})
+    # m_map = temporary_map.temporary_map_2_floors
+    # m_real_map = random_obstacles_generator.random_obstacles_generator(
+    #     empty_map=temporary_map.temporary_map_2_floors,
+    #     obstacle_prob=0.05,
+    #     human_prob=0.01,
+    #     avoid_areas={(0, 38, 2), (0, 38, 3), (0, 38, 4), (0, 38, 5), (0, 38, 6)})
+    with open('./resources/plan_budynku/xxx.bin', 'rb') as f:
+        m_map = pkl.load(f)
+    with open('./resources/plan_budynku/xxx_obstacles.bin', 'rb') as f:
+        m_real_map = pkl.load(f)
     m_robots = []
-    m_robots.append(robot_driver.RobotDriver(1, m_real_map, initial_localization=(0, 38, 2)))
-    m_robots.append(robot_driver.RobotDriver(2, m_real_map, initial_localization=(0, 38, 3)))
-    m_robots.append(robot_driver.RobotDriver(3, m_real_map, initial_localization=(0, 38, 4)))
-    m_robots.append(robot_driver.RobotDriver(4, m_real_map, initial_localization=(0, 38, 5)))
+    m_robots.append(robot_driver.RobotDriver(1, m_real_map))  # , initial_localization=(0, 38, 2)))
+    m_robots.append(robot_driver.RobotDriver(2, m_real_map))  # , initial_localization=(0, 38, 3)))
+    m_robots.append(robot_driver.RobotDriver(3, m_real_map))  # , initial_localization=(0, 38, 4)))
+    m_robots.append(robot_driver.RobotDriver(4, m_real_map))  # , initial_localization=(0, 38, 5)))
     # m_robots.append(robot_driver.RobotDriver(5, m_real_map, initial_localization=(0, 38, 6)))
     m_driver = main_driver.MainDriver(m_map, m_robots)
     for robot in m_robots:
@@ -157,23 +162,24 @@ def graph_demo():
     W = consts.MapObject.WALL
     E = consts.MapObject.EMPTY
     S = consts.MapObject.STEPS
-
-    m_map = np.array([[[W, W, W, W, W, W, W],
-                       [W, S, S, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, W, W, W, W, W, W]],
-                      [[W, W, W, W, W, W, W],
-                       [W, S, S, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, E, E, E, E, E, W],
-                       [W, W, W, W, W, W, W]]])
+    with open('./resources/plan_budynku/xxx.bin', 'rb') as f:
+        m_map = pkl.load(f)
+    # m_map = np.array([[[W, W, W, W, W, W, W],
+    #                    [W, S, S, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, W, W, W, W, W, W]],
+    #                   [[W, W, W, W, W, W, W],
+    #                    [W, S, S, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, E, E, E, E, E, W],
+    #                    [W, W, W, W, W, W, W]]])
 
     G = nx.Graph()
     mmap = m_map
@@ -205,7 +211,10 @@ def graph_demo():
 
 
 def close_rooms_demo(robots):
-    m_map = np.copy(temporary_map.temporary_map_2_floors)
+    with open('./resources/plan_budynku/xxx.bin', 'rb') as f:
+        m_map = pkl.load(f)
+    # m_map = np.copy(temporary_map.temporary_map_2_floors)
+    m_map = np.copy(m_map)
     m_gui = gui.MapGui()
     m_gui.update(m_map)
     m_gui.draw(1000)

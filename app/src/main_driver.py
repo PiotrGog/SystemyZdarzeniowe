@@ -466,19 +466,22 @@ class MainDriver(object):
 
         result_path = []
         for area_idx, area in enumerate(robot_areas):
-            path_to_area = self._graph_connection(robot_position_plan_path, area[0])
-            area_init_position = next(x for x in path_to_area if x in set(area))
-            path_to_area = path_to_area[:path_to_area.index(area_init_position)]
-            result_path = result_path + path_to_area
-            robot_position_plan_path = area_init_position
-            path, _ = self._flood_fill(robot_position_plan_path, area)
-            for i in range(len(path) - 1):
-                if abs(path[i][1] - path[i + 1][1]) + abs(path[i][2] - path[i + 1][2]) > 1:
-                    connect_path = self._graph_connection(path[i], path[i + 1])
-                    result_path = result_path + connect_path
-                else:
-                    result_path.append(path[i])
-            robot_position_plan_path = result_path[-1]
+            try:
+                path_to_area = self._graph_connection(robot_position_plan_path, area[0])
+                area_init_position = next(x for x in path_to_area if x in set(area))
+                path_to_area = path_to_area[:path_to_area.index(area_init_position)]
+                result_path = result_path + path_to_area
+                robot_position_plan_path = area_init_position
+                path, _ = self._flood_fill(robot_position_plan_path, area)
+                for i in range(len(path) - 1):
+                    if abs(path[i][1] - path[i + 1][1]) + abs(path[i][2] - path[i + 1][2]) > 1:
+                        connect_path = self._graph_connection(path[i], path[i + 1])
+                        result_path = result_path + connect_path
+                    else:
+                        result_path.append(path[i])
+                robot_position_plan_path = result_path[-1]
+            except nx.NetworkXNoPath:
+                logging.error('Cannot find return path')
         try:
             return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
         except nx.NetworkXNoPath:
