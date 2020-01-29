@@ -112,4 +112,4 @@ class RobotDriver(object):
             self.detect_obstacle()
             if self._notification == RobotNotification.NONE and self.get_status()[0] < len(self._path) - 1:
                 self._notification = RobotNotification.WANT_RUN
-                self._movement_iterations = 1  # random.randint(5, 10)
+                self._movement_iterations = random.randint(2, 6)

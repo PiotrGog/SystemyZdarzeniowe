@@ -10,21 +10,26 @@ import matplotlib.pyplot as plt
 from src.consts import MapObject
 import logging
 import pickle as pkl
+from resources.plan_budynku import tiled_to_array
 
 
 def main():
+    maps_dir = './resources/plan_budynku/'
     logging.basicConfig(filename='app.log', filemode='w', level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
     draw_pause_time_ms = 1
+
+    clear_map_filename, obstacles_map_filename = tiled_to_array.create_maps(maps_dir)
+
     # m_map = temporary_map.temporary_map_2_floors
     # m_real_map = random_obstacles_generator.random_obstacles_generator(
     #     empty_map=temporary_map.temporary_map_2_floors,
     #     obstacle_prob=0.05,
     #     human_prob=0.01,
     #     avoid_areas={(0, 38, 2), (0, 38, 3), (0, 38, 4), (0, 38, 5), (0, 38, 6)})
-    with open('./resources/plan_budynku/xxx.bin', 'rb') as f:
+    with open(maps_dir + clear_map_filename, 'rb') as f:
         m_map = pkl.load(f)
-    with open('./resources/plan_budynku/xxx_obstacles.bin', 'rb') as f:
+    with open(maps_dir + obstacles_map_filename, 'rb') as f:
         m_real_map = pkl.load(f)
     m_robots = []
     m_robots.append(robot_driver.RobotDriver(1, m_real_map))  # , initial_localization=(0, 38, 2)))

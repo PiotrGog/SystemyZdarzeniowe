@@ -40,8 +40,9 @@ def tiled_to_array(json_map_file_name):
     return np.array(results, dtype=object)
 
 
-if __name__ == "__main__":
+def create_maps(maps_dir):
     directory_name, humans_amount, obstacle_amount = get_map_details()
+    directory_name = os.path.join(maps_dir, directory_name)
     floor_map_files = get_map_file_names(directory_name)
     map = []
     for floor_file_name in floor_map_files:
@@ -86,11 +87,16 @@ if __name__ == "__main__":
     with open(output_file_name + '_obstacles.bin', 'wb') as f:
         pickle.dump(map_obstacles, f)
 
-    with open('3dcsv.txt', 'w') as f:
-        for a in map_original:
-            np.savetxt(f, a, fmt='%2d')
-            f.write('\n')
+    # with open('3dcsv.txt', 'w') as f:
+    #     for a in map_original:
+    #         np.savetxt(f, a, fmt='%2d')
+    #         f.write('\n')
+    #
+    # map_original = np.loadtxt('3dcsv.txt')
+    # map_original = map_original.reshape((3, map_original.shape[0] // 3, map_original.shape[1]))
+    # print(map_original)
+    return output_file_name + '.bin', output_file_name + '_obstacles.bin'
 
-    map_original = np.loadtxt('3dcsv.txt')
-    map_original = map_original.reshape((3, map_original.shape[0] // 3, map_original.shape[1]))
-    print(map_original)
+
+if __name__ == "__main__":
+    create_maps('.')
