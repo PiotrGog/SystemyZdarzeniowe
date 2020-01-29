@@ -465,6 +465,7 @@ class MainDriver(object):
             self._paths[id] = [robot_coords_list[current_robot_step - 1], robot_position_plan_path]
 
         result_path = []
+        available_areas = []
         for area_idx, area in enumerate(robot_areas):
             try:
                 path_to_area = self._graph_connection(robot_position_plan_path, area[0])
@@ -480,8 +481,10 @@ class MainDriver(object):
                     else:
                         result_path.append(path[i])
                 robot_position_plan_path = result_path[-1]
+                available_areas.append(area)
             except nx.NetworkXNoPath:
-                logging.error('Cannot find return path')
+                logging.error('Cannot find path to area')
+        self._robot_area[id] = available_areas
         try:
             return_path = self._graph_connection(robot_position_plan_path, robot._initial_localization)
         except nx.NetworkXNoPath:

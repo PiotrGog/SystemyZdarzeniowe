@@ -245,12 +245,4 @@ if __name__ == '__main__':
     # close_rooms_demo(1)
     # flood_fill_demo()
     # exit()
-    '''
-    space = np.zeros((1, 10, 10))
-    path, tmp = flood_fill(space, start_pos=(5, 5))
-    print(path)
-
-    plt.imshow(tmp[0])
-    plt.show()
-    '''
     main()

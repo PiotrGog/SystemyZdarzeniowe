@@ -48,6 +48,7 @@ if __name__ == "__main__":
         floor_array = tiled_to_array(os.path.join(directory_name, floor_file_name))
         map.append(floor_array)
     map = np.vstack(map)
+    map_original = copy.deepcopy(map)
     map[map == 1] = MapObject.WALL
     map[map == 0] = MapObject.EMPTY
     map[map == 2] = MapObject.STEPS
@@ -84,3 +85,12 @@ if __name__ == "__main__":
         pickle.dump(map, f)
     with open(output_file_name + '_obstacles.bin', 'wb') as f:
         pickle.dump(map_obstacles, f)
+
+    with open('3dcsv.txt', 'w') as f:
+        for a in map_original:
+            np.savetxt(f, a, fmt='%2d')
+            f.write('\n')
+
+    map_original = np.loadtxt('3dcsv.txt')
+    map_original = map_original.reshape((3, map_original.shape[0] // 3, map_original.shape[1]))
+    print(map_original)
