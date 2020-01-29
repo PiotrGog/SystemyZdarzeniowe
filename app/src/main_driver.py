@@ -60,9 +60,9 @@ class MainDriver(object):
         }
         self._robot_return_step = {r.get_id(): None for r in robots}
         self._robot_area = {r.get_id(): [] for r in robots}
-        self._init_areas()
         self._map_graph = nx.Graph()
         self._init_graph()
+        self._init_areas()
         for robot in self._robots:
             self._set_map_field(robot._initial_localization, robot.get_id())
 
@@ -70,8 +70,27 @@ class MainDriver(object):
         map_closed_areas, closed_areas = self._close_areas()
         sorted_closed_areas = sorted(closed_areas, key=lambda x: len(x))
         robots_amount = len(self._robots)
-        for i, area in enumerate(sorted_closed_areas):
-            self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
+        distances = np.zeros((robots_amount, len(sorted_closed_areas)))
+        for num_r, robot in enumerate(distances):
+            for num_ar, area in enumerate(sorted_closed_areas):
+                try:
+                    path = self._graph_connection(self._robots[num_r]._initial_localization, area[0])
+                    distances[num_r, num_ar] = len(path)
+                except nx.NetworkXNoPath:
+                    distances[num_r, num_ar] = float('inf')
+        used_areas = set()
+        while len(used_areas) < len(sorted_closed_areas):
+            for num_r, robot in enumerate(distances):
+                closest = -1
+                for c in sorted(range(len(robot)), key=lambda k: robot[k]):
+                    if c not in used_areas and distances[num_r, c]:
+                        closest = c
+                        used_areas.add(closest)
+                        break
+                if closest != float('inf'):
+                    self._robot_area[self._robots[num_r].get_id()].append(sorted_closed_areas[closest])
+        # for i, area in enumerate(sorted_closed_areas):
+        #     self._robot_area[self._robots[i % robots_amount].get_id()].append(area)
 
     def _init_graph(self):
         available_map_objects = [MapObject.EMPTY, MapObject.STEPS, MapObject.VISITED]
@@ -168,7 +187,10 @@ class MainDriver(object):
             self._paths[robot.get_id()] = closest_not_explored[0][1].copy()
             self._robot_area[robot.get_id()].append([])
             for i in range(len(path) // 2 + 1):
-                self._paths[robot_id].remove(path[i])
+                try:
+                    self._paths[robot_id].remove(path[i])
+                except ValueError:
+                    pass
                 robot_area.remove(path[i])
                 self._paths[robot.get_id()].append(path[i])
                 self._robot_area[robot.get_id()][-1].append(path[i])
